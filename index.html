@@ -386,7 +386,9 @@ let businessHours = 8;
 let sceneTag = '';
 let manualTierIdx = -1;
 let RATE = clonePreset(platform);
-const AMAP_PROXY = 'https://cs-1-d5g815slocb5a611a-1320483685.ap-shanghai.app.tcloudbase.com/amap-proxy';
+// 高德请求优先走同域 EdgeOne 云函数（启用缓存+白名单），失败自动回退 CloudBase 代理
+const AMAP_PROXY = '/amap-proxy';
+const AMAP_PROXY_FALLBACK = 'https://cs-1-d5g815slocb5a611a-1320483685.ap-shanghai.app.tcloudbase.com/amap-proxy';
 
 // ===== 全自动状态持久化：所有操作自动保存，刷新自动恢复 =====
 function saveState(){
@@ -762,15 +764,26 @@ function render(){
   saveState(); // 所有状态自动保存
 }
 
-/* ===== 高德请求（走服务端代理，Key 不暴露在前端） ===== */
+/* ===== 高德请求（走服务端代理，Key 不暴露在前端） =====
+ * 优先同域 EdgeOne 云函数（/amap-proxy，启用缓存+白名单）；
+ * 若该函数未配置 AMAP_KEY（返回 500）、预览鉴权拦截（401）或网络异常，
+ * 自动回退到 CloudBase 代理，保证测距功能在任何情况下都不回退。 */
 async function amapGet(path, params){
   params = Object.assign({path: path}, params);
   const qs = Object.entries(params).map(([k,v])=>`${k}=${encodeURIComponent(v)}`).join('&');
-  const url = `${AMAP_PROXY}?${qs}`;
-  const r = await fetch(url);
-  const data = await r.json();
-  if(data.status !== '1') throw new Error(data.info || '请求失败');
-  return data;
+  const urls = [`${AMAP_PROXY}?${qs}`, `${AMAP_PROXY_FALLBACK}?${qs}`];
+  let lastErr;
+  for(const url of urls){
+    try{
+      const r = await fetch(url);
+      const data = await r.json().catch(()=>({}));
+      if(data && data.status === '1') return data;          // 成功直接返回
+      lastErr = new Error((data && data.info) || '代理返回异常');
+    }catch(err){
+      lastErr = err;                                          // 网络/鉴权错误，继续下一个代理
+    }
+  }
+  throw lastErr || new Error('请求失败');
 }
 
 /* ===== 高德测距 ===== */
@@ -812,17 +825,22 @@ async function autoCalcDist(showToast = true){
     render();
     if(showToast) toast('距离已自动填入');
   }catch(err){
-    if(showToast) toast(err.message || '测距失败');
+    toast(err.message || '测距失败');   // 自动/手动模式都给出可见提示，避免静默失败
   }finally{
-    btn.disabled = false; btn.textContent = '自动测距中…';
+    btn.disabled = false; btn.textContent = '重新测距';
   }
 }
 $('calcDistBtn').addEventListener('click', ()=>autoCalcDist(true));
-// 终点输入停顿600ms后自动测距
-$('endPoint').addEventListener('input', ()=>{
-  clearTimeout(autoTimer);
-  autoTimer = setTimeout(()=>autoCalcDist(false), 600);
-});
+// 起点 / 终点任意一方输入停顿600ms后自动测距（两边都有值时才发起）
+function bindAutoDist(el){
+  el.addEventListener('input', ()=>{
+    delete el.dataset.loc;            // 手动改动则放弃旧定位坐标，改用文字重新地理编码
+    clearTimeout(autoTimer);
+    autoTimer = setTimeout(()=>autoCalcDist(false), 600);
+  });
+}
+bindAutoDist($('startPoint'));
+bindAutoDist($('endPoint'));
 function doLocate(silent = false){
   if(!navigator.geolocation) return;
   if(!silent) toast('正在定位…');
@@ -986,6 +1004,10 @@ setInterval(tick, 1000*20); tick();
 loadState(); // 先恢复上次所有设置
 render();
 renderHist();
+// 若上次已填写起终点，自动补一次测距（便于刷新后恢复里程）
+if($('startPoint').value.trim() && $('endPoint').value.trim()){
+  setTimeout(()=>autoCalcDist(false), 800);
+}
 
 // 注册PWA Service Worker
 if('serviceWorker' in navigator && location.protocol === 'https:'){

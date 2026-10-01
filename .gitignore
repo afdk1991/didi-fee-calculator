@@ -10,6 +10,13 @@ android/.idea/
 .preview*.png
 *.log
 
+# 构建/部署产物（由 sync-web.js / edgeone 生成，非源码）
+web-dist/
+deploy/
+deploy_out.json
+.env
+.edgeone/
+
 # 系统文件
 .DS_Store
 Thumbs.db

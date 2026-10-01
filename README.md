@@ -24,8 +24,11 @@
 ├── manifest.json       # PWA应用清单
 ├── sw.js               # Service Worker离线缓存
 ├── sync-web.js         # 统一同步脚本：根 Web 资源 -> android assets
+├── cloud-functions/
+│   └── amap-proxy.js   # 【已上线·EdgeOne Makers Node 云函数】同域代理 /amap-proxy
+│                       #   onRequest(context) + context.env.AMAP_KEY；白名单+缓存+签名
 ├── cloudfunctions/
-│   └── amap-proxy/     # 高德地图API代理云函数（避免Key暴露在前端）
+│   └── amap-proxy/     # 高德地图API代理（腾讯云 SCF 等价实现，便于 SCF 部署）
 │       ├── index.js    # v1.1：API白名单 + 内存缓存 + 参数校验 + 规范错误码
 │       ├── package.json
 │       └── scf_bootstrap
@@ -43,12 +46,23 @@
 - 注意：需要HTTPS才能使用定位和PWA功能
 
 ### 高德地图代理部署
-为了避免高德Key暴露在前端，测距功能走了云函数代理，部署步骤：
-1. 注册腾讯云CloudBase，新建云函数，环境变量配置：
+为了避免高德Key暴露在前端，测距功能走了云函数代理。两种等价实现：
+
+**A. EdgeOne Makers 云函数（已上线，推荐同域）**
+- 代码：`cloud-functions/amap-proxy.js`（`onRequest(context)`，路由 `/amap-proxy`）。
+- 全栈部署：`deploy/` = `web-dist/` + `cloud-functions/`，执行
+  `edgeone makers deploy ./deploy -n daijia-calc -t <TOKEN>`（已配项目守卫，复用 `makers-fanpewlpbwjz`）。
+- ⚠️ **必须在 Makers 控制台「项目设置 → 环境变量」配置 `AMAP_KEY`**（以及可选 `AMAP_SECRET`），否则函数返回 500。
+- 切换前端：把 `index.html` 的 `AMAP_PROXY` 改为同域 `https://<你的域名>/amap-proxy`，再 `node sync-web.js` 同步 assets 并重新部署 PWA。
+
+**B. 腾讯云 SCF（等价实现）**
+1. 注册腾讯云，新建 SCF 云函数，环境变量配置：
    - `AMAP_KEY`：你的高德Web服务Key
    - `AMAP_SECRET`：高德安全密钥（可选）
 2. 把 `cloudfunctions/amap-proxy` 目录下的代码上传部署
 3. 修改 `index.html` 里的 `AMAP_PROXY` 地址为你自己的云函数URL
+
+> 当前线上 `index.html` 仍指向旧版 CloudBase 直转代理（功能正常，但无白名单/缓存）。待在控制台设置 `AMAP_KEY` 后，可切到方案 A 的同域函数以启用缓存与防滥用白名单。
 
 ### Android打包
 项目里已经有打好的debug APK，如需重新打包：
