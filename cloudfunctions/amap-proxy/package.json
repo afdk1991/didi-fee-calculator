@@ -1,5 +1,13 @@
 {
   "name": "amap-proxy",
-  "version": "1.0.0",
-  "main": "index.js"
+  "version": "1.1.0",
+  "description": "高德地图 Web 服务代理：隐藏 Key、API 白名单、内存缓存",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "local": "node index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
 }

@@ -20,17 +20,18 @@
 
 ```
 代驾距离收费计算/
-├── index.html          # 主应用单文件，所有代码都在这
+├── index.html          # 主应用单文件（单一可信源）
 ├── manifest.json       # PWA应用清单
 ├── sw.js               # Service Worker离线缓存
+├── sync-web.js         # 统一同步脚本：根 Web 资源 -> android assets
 ├── cloudfunctions/
 │   └── amap-proxy/     # 高德地图API代理云函数（避免Key暴露在前端）
-│       ├── index.js
+│       ├── index.js    # v1.1：API白名单 + 内存缓存 + 参数校验 + 规范错误码
 │       ├── package.json
 │       └── scf_bootstrap
 ├── .test/
-│   └── calc.test.js    # 计费逻辑单元测试
-├── android/            # Android WebView打包工程
+│   └── calc.test.js    # 计费逻辑单元测试（25 用例，node 运行）
+├── android/            # Android WebView打包工程（assets 为 index.html 副本）
 └── 代驾收费计算器-v1.0.0-debug.apk  # 已打包的Android安装包
 ```
 
@@ -59,6 +60,19 @@ cd android
 ## 运行测试
 ```bash
 node .test/calc.test.js
+```
+
+## 保持网页与 App 一致（重要）
+根目录 `index.html` / `manifest.json` / `sw.js` 是**单一可信源**，Android 壳运行时加载的是 `android/app/src/main/assets/` 下的副本。改了网页后务必同步，否则 App 内嵌页会过期：
+```bash
+node sync-web.js
+```
+脚本会比较并单向复制上述三个文件到 assets 目录，报告哪些更新了、哪些已一致。
+
+## 高德代理说明
+`amap-proxy` 仅放行白名单内的高德 API（`/v3/geocode/geo`、`/v3/geocode/regeo`、`/v3/direction/driving`、`/v3/distance`、`/v3/assistant/coordinate/convert`），并对成功响应做 60s 内存缓存以节省配额；Key 与安全密钥只在服务端注入。本地调试：
+```bash
+cd cloudfunctions/amap-proxy && AMAP_KEY=你的Key node index.js
 ```
 
 ## 价格说明

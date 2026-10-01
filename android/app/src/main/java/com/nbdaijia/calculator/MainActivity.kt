@@ -6,9 +6,11 @@ import android.content.Intent
 import android.os.Bundle
 import android.webkit.GeolocationPermissions
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
+import android.webkit.WebResourceRequest
+import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import android.webkit.WebSettings
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -30,20 +32,30 @@ class MainActivity : AppCompatActivity() {
         web = findViewById(R.id.webview)
         web.settings.apply {
             javaScriptEnabled = true
-            domStorageEnabled = true           // localStorage 必须开
+            domStorageEnabled = true           // localStorage 必须开（状态持久化依赖它）
+            databaseEnabled = true
             setGeolocationEnabled(true)
             allowFileAccess = true
             allowContentAccess = true
             allowUniversalAccessFromFileURLs = true   // file:// 页面 fetch https 接口
             mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
             cacheMode = WebSettings.LOAD_DEFAULT
-            databaseEnabled = true
+
+            // 移动端视口与缩放优化
+            loadWithOverviewMode = true
+            useWideViewPort = true
+            setSupportZoom(false)
+            builtInZoomControls = false
+            displayZoomControls = false
+            // 适配网页中的 viewport-fit=cover 安全区
+            @Suppress("DEPRECATION")
+            saveFormData = false
         }
 
         web.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(
                 view: WebView?,
-                request: android.webkit.WebResourceRequest?
+                request: WebResourceRequest?
             ): Boolean {
                 val url = request?.url ?: return false
                 // 外部链接（高德控制台等）交给系统浏览器
@@ -57,6 +69,22 @@ class MainActivity : AppCompatActivity() {
                 }
                 return false
             }
+
+            // 主框架加载失败（如资源缺失 / 离线）：给出友好提示而非白屏
+            override fun onReceivedError(
+                view: WebView?,
+                request: WebResourceRequest?,
+                error: WebResourceError?
+            ) {
+                if (request?.isForMainFrame != false) {
+                    val msg = when (error?.errorCode) {
+                        ERROR_CONNECT -> "网络异常，请检查网络后重试"
+                        ERROR_HOST_LOOKUP, ERROR_TIMEOUT -> "无法连接，请检查网络"
+                        else -> "页面加载失败，请重试"
+                    }
+                    showToast(msg)
+                }
+            }
         }
 
         web.webChromeClient = object : WebChromeClient() {
@@ -64,8 +92,16 @@ class MainActivity : AppCompatActivity() {
                 origin: String?,
                 callback: GeolocationPermissions.Callback?
             ) {
-                // HTML 里 navigator.geolocation 的权限弹窗：直接放行
+                // HTML 里 navigator.geolocation 的权限弹窗：直接放行（本地计算器场景）
                 callback?.invoke(origin, true, false)
+            }
+
+            // 便于本地调试时查看网页 console 输出
+            override fun onConsoleMessage(consoleMessage: android.webkit.ConsoleMessage?): Boolean {
+                consoleMessage?.let {
+                    android.util.Log.d("DJWebView", "${it.message()} @ ${it.lineNumber()}")
+                }
+                return true
             }
         }
 
@@ -77,6 +113,10 @@ class MainActivity : AppCompatActivity() {
         } else {
             web.restoreState(savedInstanceState)
         }
+    }
+
+    private fun showToast(msg: String) {
+        android.widget.Toast.makeText(this, msg, android.widget.Toast.LENGTH_SHORT).show()
     }
 
     private fun ensureLocationPermission() {

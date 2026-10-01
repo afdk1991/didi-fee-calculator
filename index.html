@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0f172a">
+<meta name="color-scheme" content="light dark">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="description" content="滴滴代驾、E代驾费用快速计算，支持长途、商务、代泊车，自动按时段计价">
@@ -133,6 +134,21 @@
     color:#fff;padding:10px 18px;border-radius:999px;font-size:13px;opacity:0;pointer-events:none;
     transition:opacity .25s;z-index:99;max-width:90%;text-align:center;}
   .toast.show{opacity:1;}
+
+  /* ===== 暗色模式（跟随系统） ===== */
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0b1220; --card:#111c30; --ink:#e8eef7; --sub:#94a3b8;
+      --line:#223049; --brand:#3b82f6; --brand-d:#2563eb;
+    }
+    .route-input input, .field input, .note, .tier-info,
+    .dist-quick .chip, .btn, .ghost, .platform, .route-input .locate{background:var(--bg);}
+    .platform button.on{color:#fff;}
+  }
+
+  /* ===== 键盘可达性：可见焦点环 ===== */
+  :focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:6px;}
+  .platform button:focus-visible, .chip:focus-visible{outline-offset:3px;}
 </style>
 </head>
 <body>
@@ -187,9 +203,9 @@
   <div class="card" id="bizCard" style="display:none;">
     <div class="label"><span>商务代驾时长</span><span id="bizTip"></span></div>
     <div class="stepper">
-      <button class="btn" id="bizMinus">−</button>
+      <button class="btn" id="bizMinus" aria-label="减少商务时长小时">−</button>
       <div class="val"><span id="bizVal">8</span><small>小时</small></div>
-      <button class="btn" id="bizPlus">＋</button>
+      <button class="btn" id="bizPlus" aria-label="增加商务时长小时">＋</button>
     </div>
     <div class="note" id="bizRuleTip"></div>
   </div>
@@ -211,13 +227,13 @@
     </div>
     <div class="route-input">
       <div class="dot start"></div>
-      <input id="startPoint" type="text" placeholder="起点，如：鄞州万达广场" autocomplete="off">
+      <input id="startPoint" type="text" placeholder="起点，如：鄞州万达广场" autocomplete="off" aria-label="起点地址">
       <button class="locate" id="locateBtn" title="使用当前位置">📍</button>
     </div>
     <div class="route-line"></div>
     <div class="route-input">
       <div class="dot end"></div>
-      <input id="endPoint" type="text" placeholder="终点，如：江北来福士" autocomplete="off">
+      <input id="endPoint" type="text" placeholder="终点，如：江北来福士" autocomplete="off" aria-label="终点地址">
     </div>
     <button class="primary block" id="calcDistBtn">自动测距已开启</button>
     <div id="routeInfo" class="route-info" style="display:none"></div>
@@ -226,10 +242,10 @@
   <div class="card">
     <div class="label"><span>行驶里程</span><span>公里 (km)</span></div>
     <div class="dist-display">
-      <input id="dist" type="number" inputmode="decimal" min="0" step="0.1" value="10">
+      <input id="dist" type="number" inputmode="decimal" min="0" step="0.1" value="10" aria-label="行驶里程（公里）">
       <span class="unit">km</span>
     </div>
-    <div class="slider-row"><input id="distSlider" type="range" min="0" max="100" step="0.5" value="10"></div>
+    <div class="slider-row"><input id="distSlider" type="range" min="0" max="100" step="0.5" value="10" aria-label="行驶里程滑块"></div>
     <div class="dist-quick">
       <div class="chip" data-d="3">3km</div>
       <div class="chip" data-d="5">5km</div>
@@ -255,9 +271,9 @@
   <div class="card">
     <div class="label"><span>司机等候时长</span><span id="waitTip"></span></div>
     <div class="stepper">
-      <button class="btn" id="waitMinus">−</button>
+      <button class="btn" id="waitMinus" aria-label="减少等候分钟">−</button>
       <div class="val"><span id="waitVal">10</span><small>分钟</small></div>
-      <button class="btn" id="waitPlus">＋</button>
+      <button class="btn" id="waitPlus" aria-label="增加等候分钟">＋</button>
     </div>
     <div class="dist-quick" style="margin-top:10px;">
       <div class="chip" data-w="5">+5分</div>
