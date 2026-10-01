@@ -155,7 +155,7 @@
 <div class="app">
 
   <div class="topbar">
-    <div class="title">代驾收费计算器<small>滴滴 · E代驾 · 通用 · 网约车 一键切换</small></div>
+    <div class="title">代驾收费计算器<small>10 家平台 · 一键切换</small></div>
     <div class="clock">
       <div id="clock">--:--</div>
       <span class="badge t1" id="autoBadge">--</span>
@@ -169,6 +169,10 @@
     <button data-p="caocao">曹操出行</button>
     <button data-p="shouqi">首汽约车</button>
     <button data-p="t3">T3出行</button>
+    <button data-p="meituan">美团打车</button>
+    <button data-p="xiangdao">享道出行</button>
+    <button data-p="ruqi">如祺出行</button>
+    <button data-p="wanshun">万顺叫车</button>
   </div>
 
   <div class="platform" id="serviceSeg" style="margin-bottom:12px;">
@@ -319,7 +323,7 @@
   </details>
 
   <div class="note" style="margin:0 4px;">
-    数据来源：滴滴代驾 / E代驾公开价格表（2025-2026）为参考；曹操出行 / 首汽约车 / T3出行等为网约车示例费率（非官方，按当地实际调整）。实际计费以各平台APP发单时为准，不同城市、天气、动态加价可能有差异。
+    数据来源：滴滴代驾 / E代驾公开价格表（2025-2026）为参考；曹操出行 / 首汽约车 / T3出行 / 美团打车 / 享道出行 / 如祺出行 / 万顺叫车等为网约车示例费率（非官方，按当地实际调整）。实际计费以各平台APP发单时为准，不同城市、天气、动态加价可能有差异。
   </div>
 
 </div>
@@ -404,6 +408,43 @@ const PRESETS = {
     tiers:[
       {s:5,  e:23, fee:13, label:'日间'},
       {s:23, e:5,  fee:17, label:'夜间'}
+    ],
+    freeWait:3, waitFee:0.5, waitCap:null,
+    long:null, business:null, parking:null
+  },
+  // ===== 网约车（继续）：参考费率（非官方） =====
+  meituan: {
+    name:'美团打车', includeKm:3, overMode:'unit', overPrice:2.5,
+    tiers:[
+      {s:5,  e:23, fee:14, label:'日间'},
+      {s:23, e:5,  fee:18, label:'夜间'}
+    ],
+    freeWait:3, waitFee:0.5, waitCap:null,
+    long:null, business:null, parking:null
+  },
+  xiangdao: {
+    name:'享道出行', includeKm:3, overMode:'unit', overPrice:2.9,
+    tiers:[
+      {s:5,  e:23, fee:16, label:'日间'},
+      {s:23, e:5,  fee:21, label:'夜间'}
+    ],
+    freeWait:3, waitFee:0.6, waitCap:null,
+    long:null, business:null, parking:null
+  },
+  ruqi: {
+    name:'如祺出行', includeKm:2.5, overMode:'unit', overPrice:2.5,
+    tiers:[
+      {s:5,  e:23, fee:13, label:'日间'},
+      {s:23, e:5,  fee:17, label:'夜间'}
+    ],
+    freeWait:3, waitFee:0.5, waitCap:null,
+    long:null, business:null, parking:null
+  },
+  wanshun: {
+    name:'万顺叫车', includeKm:3, overMode:'unit', overPrice:2.3,
+    tiers:[
+      {s:5,  e:23, fee:12, label:'日间'},
+      {s:23, e:5,  fee:16, label:'夜间'}
     ],
     freeWait:3, waitFee:0.5, waitCap:null,
     long:null, business:null, parking:null

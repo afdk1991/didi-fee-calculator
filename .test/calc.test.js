@@ -35,6 +35,27 @@ const PRESETS = {
     includeKm:2.5, overMode:'unit', overPrice:2.4,
     tiers:[{s:5,e:23,fee:13},{s:23,e:5,fee:17}],
     freeWait:3, waitFee:0.5, waitCap:null
+  },
+  // 网约车（继续）：参考费率（非官方）
+  meituan: {
+    includeKm:3, overMode:'unit', overPrice:2.5,
+    tiers:[{s:5,e:23,fee:14},{s:23,e:5,fee:18}],
+    freeWait:3, waitFee:0.5, waitCap:null
+  },
+  xiangdao: {
+    includeKm:3, overMode:'unit', overPrice:2.9,
+    tiers:[{s:5,e:23,fee:16},{s:23,e:5,fee:21}],
+    freeWait:3, waitFee:0.6, waitCap:null
+  },
+  ruqi: {
+    includeKm:2.5, overMode:'unit', overPrice:2.5,
+    tiers:[{s:5,e:23,fee:13},{s:23,e:5,fee:17}],
+    freeWait:3, waitFee:0.5, waitCap:null
+  },
+  wanshun: {
+    includeKm:3, overMode:'unit', overPrice:2.3,
+    tiers:[{s:5,e:23,fee:12},{s:23,e:5,fee:16}],
+    freeWait:3, waitFee:0.5, waitCap:null
   }
 };
 function calcNormal(rate, dist, wait, hour, opt){
@@ -130,6 +151,11 @@ const cases = [
   ['曹操出行 10km日间',     calcNormal(PRESETS.caocao, 10,0,12), 32.2],
   ['首汽约车 10km日间',     calcNormal(PRESETS.shouqi, 10,0,12), 34.6],
   ['T3出行 10km日间',       calcNormal(PRESETS.t3, 10,0,12), 31],
+  // 网约车（继续）
+  ['美团打车 10km日间',     calcNormal(PRESETS.meituan, 10,0,12), 31.5],
+  ['享道出行 10km日间',     calcNormal(PRESETS.xiangdao, 10,0,12), 36.3],
+  ['如祺出行 10km日间',     calcNormal(PRESETS.ruqi, 10,0,12), 31.75],
+  ['万顺叫车 10km日间',     calcNormal(PRESETS.wanshun, 10,0,12), 28.1],
 ];
 let pass=0, fail=0;
 for(const [d, got, exp] of cases){
