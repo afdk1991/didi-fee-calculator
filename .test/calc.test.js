@@ -19,6 +19,22 @@ const PRESETS = {
     freeWait:10, waitFee:1, waitCap:null,
     long:{ packages:[{fee:121,km:30,hours:0}], overBlockKm:10, overBlockFee:20, freeWait:30, waitFee:20 },
     business:{ baseFee:300, baseHours:8, workStart:9, workEnd:18, overtimeFee:40, overtimeLimit:22, minHours:8 }
+  },
+  // 网约车：参考费率（非官方）
+  caocao: {
+    includeKm:3, overMode:'unit', overPrice:2.6,
+    tiers:[{s:5,e:23,fee:14},{s:23,e:5,fee:18}],
+    freeWait:3, waitFee:0.5, waitCap:null
+  },
+  shouqi: {
+    includeKm:3, overMode:'unit', overPrice:2.8,
+    tiers:[{s:5,e:23,fee:15},{s:23,e:5,fee:20}],
+    freeWait:3, waitFee:0.6, waitCap:null
+  },
+  t3: {
+    includeKm:2.5, overMode:'unit', overPrice:2.4,
+    tiers:[{s:5,e:23,fee:13},{s:23,e:5,fee:17}],
+    freeWait:3, waitFee:0.5, waitCap:null
   }
 };
 function calcNormal(rate, dist, wait, hour, opt){
@@ -110,6 +126,10 @@ const cases = [
   ['滴滴日常 10km +停车5',   calcNormal(PRESETS.didi, 10,0,12,{park:5}), 47],
   ['滴滴日常 10km +接驾8',   calcNormal(PRESETS.didi, 10,0,12,{pickup:8}), 50],
   ['滴滴日常 10km 全费用',   calcNormal(PRESETS.didi, 10,0,12,{surgePct:10,toll:10,park:5,pickup:8}), 69.2],
+  // 网约车（参考费率，非官方）
+  ['曹操出行 10km日间',     calcNormal(PRESETS.caocao, 10,0,12), 32.2],
+  ['首汽约车 10km日间',     calcNormal(PRESETS.shouqi, 10,0,12), 34.6],
+  ['T3出行 10km日间',       calcNormal(PRESETS.t3, 10,0,12), 31],
 ];
 let pass=0, fail=0;
 for(const [d, got, exp] of cases){

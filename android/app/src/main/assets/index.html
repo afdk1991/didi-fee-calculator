@@ -34,8 +34,8 @@
   .badge.t3{background:#ffedd5;color:#9a3412;}
   .badge.t4{background:#dbeafe;color:#1e40af;}
 
-  .platform{display:flex;gap:6px;background:var(--card);padding:6px;border-radius:14px;margin-bottom:12px;box-shadow:0 1px 2px rgba(15,23,42,.04);}
-  .platform button{flex:1;min-width:0;border:none;background:transparent;padding:11px 0;border-radius:10px;
+  .platform{display:flex;gap:6px;background:var(--card);padding:6px;border-radius:14px;margin-bottom:12px;box-shadow:0 1px 2px rgba(15,23,42,.04);overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+  .platform button{flex:1 1 0;min-width:60px;border:none;background:transparent;padding:11px 0;border-radius:10px;
     font-size:14px;font-weight:600;color:var(--sub);cursor:pointer;white-space:nowrap;}
   .platform button.on{background:var(--brand);color:#fff;box-shadow:0 2px 8px rgba(37,99,235,.35);}
 
@@ -155,7 +155,7 @@
 <div class="app">
 
   <div class="topbar">
-    <div class="title">代驾收费计算器<small>滴滴 · E代驾 · 通用 一键切换</small></div>
+    <div class="title">代驾收费计算器<small>滴滴 · E代驾 · 通用 · 网约车 一键切换</small></div>
     <div class="clock">
       <div id="clock">--:--</div>
       <span class="badge t1" id="autoBadge">--</span>
@@ -166,6 +166,9 @@
     <button data-p="general">通用</button>
     <button data-p="didi" class="on">滴滴代驾</button>
     <button data-p="edaijia">E代驾</button>
+    <button data-p="caocao">曹操出行</button>
+    <button data-p="shouqi">首汽约车</button>
+    <button data-p="t3">T3出行</button>
   </div>
 
   <div class="platform" id="serviceSeg" style="margin-bottom:12px;">
@@ -316,7 +319,7 @@
   </details>
 
   <div class="note" style="margin:0 4px;">
-    数据来源：滴滴代驾 / E代驾公开价格表（2025-2026），实际计费以平台APP发单时为准；不同城市、天气、动态加价可能有差异。
+    数据来源：滴滴代驾 / E代驾公开价格表（2025-2026）为参考；曹操出行 / 首汽约车 / T3出行等为网约车示例费率（非官方，按当地实际调整）。实际计费以各平台APP发单时为准，不同城市、天气、动态加价可能有差异。
   </div>
 
 </div>
@@ -376,6 +379,34 @@ const PRESETS = {
       overtimeFee:40, overtimeLimit:22, minHours:8
     },
     parking: null
+  },
+  // ===== 以下为网约车平台：参考费率（非官方），实际以各平台APP发单时为准 =====
+  caocao: {
+    name:'曹操出行', includeKm:3, overMode:'unit', overPrice:2.6,
+    tiers:[
+      {s:5,  e:23, fee:14, label:'日间'},
+      {s:23, e:5,  fee:18, label:'夜间'}
+    ],
+    freeWait:3, waitFee:0.5, waitCap:null,
+    long:null, business:null, parking:null
+  },
+  shouqi: {
+    name:'首汽约车', includeKm:3, overMode:'unit', overPrice:2.8,
+    tiers:[
+      {s:5,  e:23, fee:15, label:'日间'},
+      {s:23, e:5,  fee:20, label:'夜间'}
+    ],
+    freeWait:3, waitFee:0.6, waitCap:null,
+    long:null, business:null, parking:null
+  },
+  t3: {
+    name:'T3出行', includeKm:2.5, overMode:'unit', overPrice:2.4,
+    tiers:[
+      {s:5,  e:23, fee:13, label:'日间'},
+      {s:23, e:5,  fee:17, label:'夜间'}
+    ],
+    freeWait:3, waitFee:0.5, waitCap:null,
+    long:null, business:null, parking:null
   }
 };
 
