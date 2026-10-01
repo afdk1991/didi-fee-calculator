@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  【旧版参考】AGP 7.0 之前的 AndroidManifest.xml 写法
+  ──────────────────────────────────────────────
+  这就是你最初问题里说的：
+  "打开AndroidManifest.xml配置文件，package属性所对应的内容为应用包名"
+
+  在老版本工程中，根标签 <manifest> 上直接写 package 属性：
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.pkgdemo">          <!-- ← 这一行就是你说的「package 属性」 -->
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/Theme.PkgDemo">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>
+
+<!--
+  ──────────────────────────────────────────────
+  📌 新旧对比：
+
+  【旧版（AGP < 7.0）】
+    AndroidManifest.xml 里写 package="com.example.pkgdemo"
+    build.gradle 里没有 namespace
+
+  【新版（AGP >= 7.0）—— 本工程采用的写法】
+    AndroidManifest.xml 里不写 package
+    build.gradle 里写 namespace 'com.example.pkgdemo'
+
+  两者作用完全等价：都是 R 类 / BuildConfig 的 Java 包名。
+  ──────────────────────────────────────────────
+-->

@@ -1,0 +1,98 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.example.pkgdemo'   // 【方法二】namespace = 代码中 R 类 / BuildConfig 所在包名
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.example.pkgdemo"  // 【方法二】applicationId = 最终安装到设备上的包名
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    // ── 【方法二扩展】多渠道 flavor：同一套代码打出不同包名的 APK ──
+    // dev 渠道包名:  com.example.pkgdemo.dev
+    // prod 渠道包名: com.example.pkgdemo （正式包）
+    flavorDimensions "env"
+    productFlavors {
+        dev {
+            dimension "env"
+            applicationIdSuffix ".dev"       // 包名后缀 → com.example.pkgdemo.dev
+            versionNameSuffix "-dev"
+            buildConfigField "String", "BUILD_ENV", '"开发版"'
+            resValue "string", "app_name", "包名演示(开发版)"
+        }
+        prod {
+            dimension "env"
+            buildConfigField "String", "BUILD_ENV", '"正式版"'
+            resValue "string", "app_name", "包名演示"
+        }
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix ".debug"     // debug 包名再叠加 → com.example.pkgdemo.dev.debug
+            versionNameSuffix "-debug"
+        }
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+
+    // 单元测试（本地 JVM 测试，无需真机）
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.robolectric:robolectric:4.12.1'
+
+    // 仪器测试（需真机/模拟器）
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+}
+
+// ── 【方法二扩展】命令行打印所有 variant 的最终包名 ──
+// 运行: gradlew :app:printAllApplicationIds
+android.applicationVariants.all { variant ->
+    task("print${variant.name.capitalize()}ApplicationId") {
+        doLast {
+            println "  Variant: ${variant.name}"
+            println "  applicationId = ${variant.applicationId.get()}"
+            println "  versionName   = ${variant.versionName}"
+            println "  ────────────────────────────"
+        }
+    }
+}
+
+task printAllApplicationIds {
+    group = "help"
+    description = "打印所有构建变体的最终 applicationId（包名）"
+    doLast {
+        println ""
+        println "====== 所有构建变体的最终包名 ======"
+        println "namespace = ${android.namespace}"
+        println "──────────────────────────────────"
+    }
+    android.applicationVariants.all { variant ->
+        dependsOn "print${variant.name.capitalize()}ApplicationId"
+    }
+}

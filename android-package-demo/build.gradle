@@ -1,0 +1,33 @@
+// 【项目级 build.gradle】—— 整个工程的构建配置入口
+// 这里声明全局仓库和插件版本，不在此写 app 级配置
+
+buildscript {
+    ext {
+        kotlin_version = "1.9.22"
+        gradle_version = "8.2.0"
+    }
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        // Android Gradle 插件
+        classpath "com.android.tools.build:gradle:$gradle_version"
+        // Kotlin 插件
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        // 国内镜像（可选，加速依赖下载）
+        // maven { url 'https://maven.aliyun.com/repository/google' }
+        // maven { url 'https://maven.aliyun.com/repository/public' }
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}

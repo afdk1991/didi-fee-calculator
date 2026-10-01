@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="description" content="滴滴代驾、E代驾费用快速计算，支持长途、商务、代泊车，自动按时段计价">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232563eb'/><text x='50' y='65' font-size='40' text-anchor='middle' fill='white'>代</text></svg>">
+<title>代驾收费计算器</title>
+<style>
+  :root{
+    --bg:#f1f5f9; --card:#ffffff; --ink:#0f172a; --sub:#64748b;
+    --line:#e2e8f0; --brand:#2563eb; --brand-d:#1d4ed8;
+    --radius:16px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    font-size:16px;line-height:1.5;padding-bottom:env(safe-area-inset-bottom);
+    width:100%;max-width:100%;overflow-x:hidden;}
+  .app{max-width:480px;margin:0 auto;padding:16px 14px 40px;width:100%;overflow:hidden;}
+
+  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .title{font-size:19px;font-weight:700;letter-spacing:.5px;}
+  .title small{display:block;font-size:12px;color:var(--sub);font-weight:400;margin-top:2px;}
+  .clock{font-size:12px;color:var(--sub);text-align:right;}
+  .clock .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;margin-top:4px;}
+  .badge.t1{background:#dcfce7;color:#166534;}
+  .badge.t2{background:#fef3c7;color:#92400e;}
+  .badge.t3{background:#ffedd5;color:#9a3412;}
+  .badge.t4{background:#dbeafe;color:#1e40af;}
+
+  .platform{display:flex;gap:6px;background:var(--card);padding:6px;border-radius:14px;margin-bottom:12px;box-shadow:0 1px 2px rgba(15,23,42,.04);}
+  .platform button{flex:1;min-width:0;border:none;background:transparent;padding:11px 0;border-radius:10px;
+    font-size:14px;font-weight:600;color:var(--sub);cursor:pointer;white-space:nowrap;}
+  .platform button.on{background:var(--brand);color:#fff;box-shadow:0 2px 8px rgba(37,99,235,.35);}
+
+  .card{background:var(--card);border-radius:var(--radius);padding:16px;margin-bottom:12px;
+    box-shadow:0 1px 2px rgba(15,23,42,.04);overflow:hidden;}
+  .label{font-size:13px;color:var(--sub);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;}
+  .label > span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+  .route-input{display:flex;align-items:center;gap:8px;}
+  .route-input .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+  .route-input .dot.start{background:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,.15);}
+  .route-input .dot.end{background:#ef4444;box-shadow:0 0 0 3px rgba(239,68,68,.15);}
+  .route-input input{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:10px 12px;
+    font-size:14px;outline:none;background:var(--bg);color:var(--ink);}
+  .route-input input:focus{border-color:var(--brand);background:#fff;}
+  .locate{border:none;background:var(--bg);width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:18px;flex-shrink:0;}
+  .route-line{width:2px;height:14px;background:var(--line);margin:4px 0 4px 4px;}
+  .block{width:100%;padding:13px;margin-top:12px;border:none;border-radius:12px;}
+  .block:disabled{opacity:.6;cursor:not-allowed;}
+  .route-info{margin-top:10px;font-size:13px;color:var(--sub);background:var(--bg);padding:10px 12px;border-radius:10px;line-height:1.5;}
+  .route-info b{color:var(--brand);}
+  .key-tip{font-size:11px;color:var(--sub);margin-top:6px;line-height:1.5;}
+  .key-tip a{color:var(--brand);text-decoration:none;}
+
+  .dist-display{display:flex;align-items:baseline;justify-content:center;gap:6px;padding:6px 0 2px;}
+  .dist-display input{width:170px;font-size:46px;font-weight:700;text-align:center;border:none;
+    background:transparent;color:var(--ink);outline:none;border-bottom:2px dashed var(--line);}
+  .dist-display .unit{font-size:18px;color:var(--sub);font-weight:500;}
+  .slider-row{margin-top:10px;}
+  input[type=range]{width:100%;-webkit-appearance:none;height:6px;border-radius:3px;background:var(--line);outline:none;display:block;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;
+    background:var(--brand);cursor:pointer;box-shadow:0 2px 6px rgba(37,99,235,.4);border:3px solid #fff;}
+  .dist-quick{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+  .chip{flex:1 1 30%;min-width:56px;padding:8px 0;text-align:center;background:var(--bg);border-radius:10px;
+    font-size:13px;color:var(--ink);cursor:pointer;border:1px solid transparent;}
+  .chip:active{background:#e2e8f0;}
+
+  .tier-info{background:var(--bg);border-radius:12px;padding:12px;margin-top:10px;}
+  .tier-info .cur{display:flex;justify-content:space-between;align-items:baseline;}
+  .tier-info .cur .name{font-size:14px;font-weight:600;}
+  .tier-info .cur .fee{font-size:22px;font-weight:700;color:var(--brand);}
+  .tier-info .cur .fee small{font-size:12px;color:var(--sub);font-weight:400;}
+  .tier-grid{display:flex;gap:4px;margin-top:10px;}
+  .tier-grid .t{flex:1;text-align:center;padding:6px 2px;border-radius:8px;font-size:11px;color:var(--sub);cursor:pointer;}
+  .tier-grid .t.on{background:#fff;color:var(--brand);font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.08);}
+  .tier-grid .t .p{font-size:13px;font-weight:700;color:var(--ink);display:block;}
+  .tier-grid .t.on .p{color:var(--brand);}
+
+  .stepper{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .stepper .val{flex:1;text-align:center;font-size:22px;font-weight:600;}
+  .stepper .val small{font-size:12px;color:var(--sub);font-weight:400;display:block;}
+  .btn{width:44px;height:44px;border-radius:12px;border:none;background:var(--bg);font-size:22px;
+    color:var(--ink);cursor:pointer;font-weight:600;flex-shrink:0;}
+  .btn:active{background:#e2e8f0;}
+
+  .result{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;border-radius:var(--radius);
+    padding:20px 18px;margin-bottom:12px;box-shadow:0 6px 20px rgba(37,99,235,.3);}
+  .result .rl{font-size:13px;opacity:.85;}
+  .result .rt{font-size:42px;font-weight:700;margin:4px 0 10px;letter-spacing:1px;}
+  .detail{font-size:13px;line-height:1.9;border-top:1px solid rgba(255,255,255,.2);padding-top:10px;}
+  .detail .row{display:flex;justify-content:space-between;gap:10px;}
+  .detail .row > span{min-width:0;word-break:break-all;}
+  .detail .row b{font-weight:600;white-space:nowrap;}
+
+  details{background:var(--card);border-radius:var(--radius);margin-bottom:12px;overflow:hidden;}
+  details summary{list-style:none;cursor:pointer;padding:15px 18px;font-weight:600;font-size:15px;
+    display:flex;justify-content:space-between;align-items:center;}
+  details summary::-webkit-details-marker{display:none;}
+  details summary::after{content:"▾";color:var(--sub);transition:transform .2s;}
+  details[open] summary::after{transform:rotate(180deg);}
+  details .body{padding:0 18px 16px;}
+
+  .field{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px dashed var(--line);gap:10px;}
+  .field:last-child{border-bottom:none;}
+  .field .k{font-size:14px;min-width:0;}
+  .field .k small{display:block;font-size:11px;color:var(--sub);}
+  .field input{width:90px;padding:8px;text-align:right;border:1px solid var(--line);border-radius:8px;
+    font-size:15px;background:var(--bg);outline:none;flex-shrink:0;}
+  .field input:focus{border-color:var(--brand);}
+
+  .actions{display:flex;gap:10px;margin-top:4px;}
+  .actions button{flex:1;padding:14px 0;border-radius:12px;border:none;font-size:15px;font-weight:600;cursor:pointer;}
+  .primary{background:var(--brand);color:#fff;}
+  .primary:active{background:var(--brand-d);}
+  .ghost{background:var(--card);color:var(--ink);border:1px solid var(--line)!important;}
+
+  .hist-item{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);font-size:14px;gap:10px;}
+  .hist-item:last-child{border-bottom:none;}
+  .hist-item .meta{color:var(--sub);font-size:12px;margin-top:2px;}
+  .hist-item .price{font-weight:700;color:var(--brand);font-size:16px;white-space:nowrap;}
+  .empty{text-align:center;color:var(--sub);font-size:13px;padding:20px 0;}
+
+  .note{font-size:11px;color:var(--sub);line-height:1.6;margin-top:10px;padding:8px 10px;background:var(--bg);border-radius:8px;}
+
+  .toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:rgba(15,23,42,.9);
+    color:#fff;padding:10px 18px;border-radius:999px;font-size:13px;opacity:0;pointer-events:none;
+    transition:opacity .25s;z-index:99;max-width:90%;text-align:center;}
+  .toast.show{opacity:1;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="title">代驾收费计算器<small>滴滴 · E代驾 · 通用 一键切换</small></div>
+    <div class="clock">
+      <div id="clock">--:--</div>
+      <span class="badge t1" id="autoBadge">--</span>
+    </div>
+  </div>
+
+  <div class="platform" id="platformSeg">
+    <button data-p="general">通用</button>
+    <button data-p="didi" class="on">滴滴代驾</button>
+    <button data-p="edaijia">E代驾</button>
+  </div>
+
+  <div class="platform" id="serviceSeg" style="margin-bottom:12px;">
+    <button data-s="normal" class="on">日常代驾</button>
+    <button data-s="long">长途代驾</button>
+    <button data-s="business">商务代驾</button>
+    <button data-s="parking">代泊车</button>
+  </div>
+
+  <div class="card" id="pkgCard" style="display:none;">
+    <div class="label"><span>长途套餐</span><span>跨城/长途订单</span></div>
+    <div class="tier-grid" id="pkgGrid"></div>
+    <div class="note" id="longRuleTip"></div>
+  </div>
+
+  <div class="card" id="sceneCard">
+    <div class="label"><span>服务场景</span><span>选填 · 仅影响报价文案</span></div>
+    <div class="dist-quick" id="sceneChips">
+      <div class="chip" data-sc="酒后代驾">酒后代驾</div>
+      <div class="chip" data-sc="商务出行">商务出行</div>
+      <div class="chip" data-sc="长途跨城">长途跨城</div>
+      <div class="chip" data-sc="取送车">取送车</div>
+      <div class="chip" data-sc="代泊车">代泊车</div>
+      <div class="chip" data-sc="代保养">代保养</div>
+      <div class="chip" data-sc="代年检">代年检</div>
+      <div class="chip" data-sc="女司机代驾">女司机</div>
+      <div class="chip" data-sc="旅游代驾">旅游代驾</div>
+      <div class="chip" data-sc="疲劳代驾">疲劳代驾</div>
+      <div class="chip" data-sc="预约代驾">预约代驾</div>
+      <div class="chip" data-sc="特惠单">特惠单</div>
+      <div class="chip" data-sc="星享单">星享单</div>
+    </div>
+  </div>
+
+  <div class="card" id="bizCard" style="display:none;">
+    <div class="label"><span>商务代驾时长</span><span id="bizTip"></span></div>
+    <div class="stepper">
+      <button class="btn" id="bizMinus">−</button>
+      <div class="val"><span id="bizVal">8</span><small>小时</small></div>
+      <button class="btn" id="bizPlus">＋</button>
+    </div>
+    <div class="note" id="bizRuleTip"></div>
+  </div>
+
+  <div class="card">
+    <div class="label">
+      <span>行程起终点</span>
+      <span>
+        <select id="citySelect" style="font-size:12px;padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);">
+          <option value="宁波">宁波</option>
+          <option value="杭州">杭州</option>
+          <option value="上海">上海</option>
+          <option value="北京">北京</option>
+          <option value="广州">广州</option>
+          <option value="深圳">深圳</option>
+          <option value="全国">全国</option>
+        </select>
+      </span>
+    </div>
+    <div class="route-input">
+      <div class="dot start"></div>
+      <input id="startPoint" type="text" placeholder="起点，如：鄞州万达广场" autocomplete="off">
+      <button class="locate" id="locateBtn" title="使用当前位置">📍</button>
+    </div>
+    <div class="route-line"></div>
+    <div class="route-input">
+      <div class="dot end"></div>
+      <input id="endPoint" type="text" placeholder="终点，如：江北来福士" autocomplete="off">
+    </div>
+    <button class="primary block" id="calcDistBtn">自动测距已开启</button>
+    <div id="routeInfo" class="route-info" style="display:none"></div>
+  </div>
+
+  <div class="card">
+    <div class="label"><span>行驶里程</span><span>公里 (km)</span></div>
+    <div class="dist-display">
+      <input id="dist" type="number" inputmode="decimal" min="0" step="0.1" value="10">
+      <span class="unit">km</span>
+    </div>
+    <div class="slider-row"><input id="distSlider" type="range" min="0" max="100" step="0.5" value="10"></div>
+    <div class="dist-quick">
+      <div class="chip" data-d="3">3km</div>
+      <div class="chip" data-d="5">5km</div>
+      <div class="chip" data-d="10">10km</div>
+      <div class="chip" data-d="20">20km</div>
+      <div class="chip" data-d="35">35km</div>
+      <div class="chip" data-d="50">50km</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="label"><span>当前时段档位</span><span id="tierTip"></span></div>
+    <div class="tier-info">
+      <div class="cur">
+        <span class="name" id="curTierName">--</span>
+        <span class="fee">¥<span id="curTierFee">0</span> <small id="curTierInclude"></small></span>
+      </div>
+      <div class="tier-grid" id="tierGrid"></div>
+    </div>
+    <div class="note" id="overRuleTip"></div>
+  </div>
+
+  <div class="card">
+    <div class="label"><span>司机等候时长</span><span id="waitTip"></span></div>
+    <div class="stepper">
+      <button class="btn" id="waitMinus">−</button>
+      <div class="val"><span id="waitVal">10</span><small>分钟</small></div>
+      <button class="btn" id="waitPlus">＋</button>
+    </div>
+    <div class="dist-quick" style="margin-top:10px;">
+      <div class="chip" data-w="5">+5分</div>
+      <div class="chip" data-w="10">+10分</div>
+      <div class="chip" data-w="30">+30分</div>
+      <div class="chip" data-w="60">+1小时</div>
+      <div class="chip" data-w="0">清零</div>
+    </div>
+  </div>
+
+  <div class="result">
+    <div class="rl" id="resultTitle">预估总费用</div>
+    <div class="rt">¥<span id="total">0.00</span></div>
+    <div class="detail" id="detail"></div>
+  </div>
+
+  <details open>
+    <summary>其他费用（实报 + 动态加价）</summary>
+    <div class="body">
+      <div class="field"><span class="k">接驾费<small>远途调度加价，无则填0</small></span><input id="pickup" type="number" inputmode="decimal" min="0" step="1" value="0"></div>
+      <div class="field"><span class="k">临时调价<small>雨雪/高峰加价 %，无则填0</small></span><input id="surge" type="number" inputmode="decimal" min="0" step="5" value="0"></div>
+      <div class="field"><span class="k">高速 / 路桥费</span><input id="toll" type="number" inputmode="decimal" min="0" step="1" value="0"></div>
+      <div class="field"><span class="k">停车费</span><input id="park" type="number" inputmode="decimal" min="0" step="1" value="0"></div>
+    </div>
+  </details>
+
+  <details>
+    <summary>费率微调</summary>
+    <div class="body" id="rateBody"></div>
+  </details>
+
+  <div class="actions">
+    <button class="ghost" id="saveBtn">记录本次</button>
+    <button class="primary" id="copyBtn">复制报价</button>
+  </div>
+
+  <details>
+    <summary>最近记录 <span id="histCount" style="font-size:12px;color:var(--sub);font-weight:400;"></span></summary>
+    <div class="body" id="histList"><div class="empty">暂无记录</div></div>
+  </details>
+
+  <div class="note" style="margin:0 4px;">
+    数据来源：滴滴代驾 / E代驾公开价格表（2025-2026），实际计费以平台APP发单时为准；不同城市、天气、动态加价可能有差异。
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const PRESETS = {
+  general: {
+    name:'通用', includeKm:5, overMode:'unit', overPrice:3.5,
+    tiers:[
+      {s:6,  e:22, fee:18, label:'白天'},
+      {s:22, e:24, fee:28, label:'夜间'},
+      {s:0,  e:6,  fee:28, label:'凌晨'}
+    ],
+    freeWait:10, waitFee:1, waitCap:null,
+    long: null, business: null
+  },
+  didi: {
+    name:'滴滴代驾', includeKm:8, overMode:'unit', overPrice:3.5,
+    tiers:[
+      {s:6,  e:22, fee:35, label:'日间'},
+      {s:22, e:23, fee:50, label:'22点'},
+      {s:23, e:24, fee:65, label:'23点'},
+      {s:0,  e:6,  fee:85, label:'凌晨'}
+    ],
+    freeWait:10, waitFee:1, waitCap:180,
+    long: {
+      packages:[
+        {name:'4小时套餐', fee:236, km:300, hours:4},
+        {name:'全天套餐', fee:496, km:600, hours:24}
+      ],
+      overBlockKm:20, overBlockFee:20,
+      freeWait:30, waitFee:1
+    },
+    business: null,
+    parking: { fee:29, includeKm:1, note:'商场/医院短距离一口价，超里程按日常里程费计' }
+  },
+  edaijia: {
+    name:'E代驾', includeKm:10, overMode:'block', blockKm:10, blockFee:20,
+    tiers:[
+      {s:7,  e:22, fee:40, label:'日间'},
+      {s:22, e:23, fee:60, label:'22点'},
+      {s:23, e:24, fee:80, label:'23点'},
+      {s:0,  e:7,  fee:100, label:'凌晨'}
+    ],
+    freeWait:10, waitFee:1, waitCap:null,
+    long: {
+      packages:[
+        {name:'长途起步包', fee:121, km:30, hours:0}
+      ],
+      overBlockKm:10, overBlockFee:20,
+      freeWait:30, waitFee:20
+    },
+    business: {
+      baseFee:300, baseHours:8, workStart:9, workEnd:18,
+      overtimeFee:40, overtimeLimit:22, minHours:8
+    },
+    parking: null
+  }
+};
+
+let platform = 'didi';
+let serviceType = 'normal';
+let longPkgIdx = 0;
+let businessHours = 8;
+let sceneTag = '';
+let manualTierIdx = -1;
+let RATE = clonePreset(platform);
+const AMAP_PROXY = 'https://cs-1-d5g815slocb5a611a-1320483685.ap-shanghai.app.tcloudbase.com/amap-proxy';
+
+// ===== 全自动状态持久化：所有操作自动保存，刷新自动恢复 =====
+function saveState(){
+  try{
+    const state = {
+      platform, serviceType, longPkgIdx, businessHours, sceneTag, manualTierIdx, RATE,
+      dist: $('dist').value,
+      wait: parseInt($('waitVal').textContent),
+      pickup: $('pickup').value,
+      surge: $('surge').value,
+      toll: $('toll').value,
+      park: $('park').value,
+      city: currentCity
+    };
+    localStorage.setItem('dj_state', JSON.stringify(state));
+  }catch(e){}
+}
+function loadState(){
+  try{
+    const s = JSON.parse(localStorage.getItem('dj_state') || 'null');
+    if(!s) return;
+    platform = s.platform || 'didi';
+    serviceType = s.serviceType || 'normal';
+    longPkgIdx = s.longPkgIdx || 0;
+    businessHours = s.businessHours || 8;
+    sceneTag = s.sceneTag || '';
+    manualTierIdx = s.manualTierIdx ?? -1;
+    if(s.RATE) RATE = s.RATE;
+    // 恢复UI
+    document.querySelectorAll('#platformSeg button').forEach(x=>x.classList.toggle('on', x.dataset.p===platform));
+    document.querySelectorAll('#serviceSeg button').forEach(x=>x.classList.toggle('on', x.dataset.s===serviceType));
+    if(s.dist) $('dist').value = s.dist;
+    if(s.wait) $('waitVal').textContent = s.wait;
+    if(s.pickup) $('pickup').value = s.pickup;
+    if(s.surge) $('surge').value = s.surge;
+    if(s.toll) $('toll').value = s.toll;
+    if(s.park) $('park').value = s.park;
+    if(s.city) currentCity = s.city;
+  }catch(e){}
+}
+
+function clonePreset(k){ return JSON.parse(JSON.stringify(PRESETS[k])); }
+const $ = id => document.getElementById(id);
+function toast(t){
+  const el = $('toast'); el.textContent = t; el.classList.add('show');
+  clearTimeout(el._t); el._t = setTimeout(()=>el.classList.remove('show'), 1500);
+}
+function fmt(n){ return (Math.round(n*100)/100).toFixed(2); }
+function pad2(n){ return String(n).padStart(2,'0'); }
+
+function hourNow(){ return new Date().getHours(); }
+function findTier(h){
+  for(let i=0;i<RATE.tiers.length;i++){
+    const t = RATE.tiers[i];
+    if(t.s < t.e){ if(h >= t.s && h < t.e) return {idx:i, tier:t}; }
+    else { if(h >= t.s || h < t.e) return {idx:i, tier:t}; }
+  }
+  return {idx:0, tier:RATE.tiers[0]};
+}
+function activeTier(){
+  if(manualTierIdx >= 0 && manualTierIdx < RATE.tiers.length)
+    return {idx:manualTierIdx, tier:RATE.tiers[manualTierIdx]};
+  return findTier(hourNow());
+}
+
+function calc(){
+  const dist = Math.max(0, parseFloat($('dist').value) || 0);
+  const wait = Math.max(0, parseInt($('waitVal').textContent) || 0);
+  const toll = Math.max(0, parseFloat($('toll').value) || 0);
+  const park = Math.max(0, parseFloat($('park').value) || 0);
+  const pickup = Math.max(0, parseFloat($('pickup').value) || 0);
+  const surgePct = Math.max(0, parseFloat($('surge').value) || 0);
+
+  // ===== 长途模式 =====
+  if(serviceType === 'long' && RATE.long){
+    const L = RATE.long;
+    const pkg = L.packages[Math.min(longPkgIdx, L.packages.length-1)];
+    const rows = [];
+    rows.push([`${pkg.name}${pkg.hours?`（${pkg.hours}小时）`:''}`, `¥${fmt(pkg.fee)}`]);
+    rows.push([`含 ${pkg.km} km`, '']);
+
+    let kmFee = 0;
+    const over = dist - pkg.km;
+    if(over > 0){
+      const blocks = Math.ceil(over / L.overBlockKm);
+      kmFee = blocks * L.overBlockFee;
+      rows.push([`超 ${over.toFixed(1)}km，按 ${blocks} 个${L.overBlockKm}km段 × ¥${L.overBlockFee}`, `¥${fmt(kmFee)}`]);
+    }
+
+    const overWait = Math.max(0, wait - L.freeWait);
+    const waitFee = overWait * L.waitFee;
+    if(wait > 0){
+      rows.push([`等候 ${wait} 分钟（免费 ${L.freeWait}）`, waitFee>0 ? `¥${fmt(waitFee)}` : '免费']);
+    }
+    const surgeAmt = (pkg.fee + kmFee + waitFee) * surgePct/100;
+    if(pickup > 0) rows.push(['接驾费（远途调度）', `¥${fmt(pickup)}`]);
+    if(surgePct > 0) rows.push([`临时调价 +${surgePct}%`, `¥${fmt(surgeAmt)}`]);
+    if(toll > 0) rows.push(['高速/路桥费（实报）', `¥${fmt(toll)}`]);
+    if(park > 0) rows.push(['停车费（实报）', `¥${fmt(park)}`]);
+
+    const total = pkg.fee + kmFee + waitFee + pickup + surgeAmt + toll + park;
+    return { total, rows, dist, wait, tier:{label:'长途'}, startFee:pkg.fee, kmFee, waitFee, toll, park };
+  }
+
+  // ===== 商务模式 =====
+  if(serviceType === 'business' && RATE.business){
+    const B = RATE.business;
+    const hrs = Math.max(B.minHours, businessHours);
+    const rows = [];
+    rows.push([`商务代驾基础费（${pad2(B.workStart)}:00-${pad2(B.workEnd)}:00）`, `¥${fmt(B.baseFee)}`]);
+    rows.push([`不足 ${B.minHours} 小时按 ${B.minHours} 小时计`, '']);
+
+    let extraFee = 0;
+    if(businessHours > B.baseHours){
+      const overH = Math.min(businessHours - B.baseHours, B.overtimeLimit - B.workEnd);
+      extraFee = overH * B.overtimeFee;
+      rows.push([`超时 ${overH} 小时 × ¥${B.overtimeFee}/小时（最晚${pad2(B.overtimeLimit)}:00）`, `¥${fmt(extraFee)}`]);
+    }
+    const surgeAmt = (B.baseFee + extraFee) * surgePct/100;
+    if(pickup > 0) rows.push(['接驾费（远途调度）', `¥${fmt(pickup)}`]);
+    if(surgePct > 0) rows.push([`临时调价 +${surgePct}%`, `¥${fmt(surgeAmt)}`]);
+    if(toll > 0) rows.push(['高速/路桥费（实报）', `¥${fmt(toll)}`]);
+    if(park > 0) rows.push(['停车费（实报）', `¥${fmt(park)}`]);
+
+    const total = B.baseFee + extraFee + pickup + surgeAmt + toll + park;
+    return { total, rows, dist:0, wait:0, tier:{label:'商务'}, startFee:B.baseFee, kmFee:0, waitFee:0, toll, park };
+  }
+
+  // ===== 代泊车模式 =====
+  if(serviceType === 'parking' && RATE.parking){
+    const P = RATE.parking;
+    const rows = [];
+    rows.push([`代泊车一口价`, `¥${fmt(P.fee)}`]);
+    rows.push([`含 ${P.includeKm} km 内（${P.note}）`, '']);
+    let kmFee = 0;
+    const over = dist - P.includeKm;
+    if(over > 0){
+      if(RATE.overMode === 'unit'){
+        kmFee = Math.ceil(over*10)/10 * RATE.overPrice;
+      } else {
+        kmFee = Math.ceil(over/RATE.blockKm) * RATE.blockFee;
+      }
+      rows.push([`超里程 ${over.toFixed(1)}km`, `¥${fmt(kmFee)}`]);
+    }
+    const surgeAmt = (P.fee + kmFee) * surgePct/100;
+    if(pickup > 0) rows.push(['接驾费（远途调度）', `¥${fmt(pickup)}`]);
+    if(surgePct > 0) rows.push([`临时调价 +${surgePct}%`, `¥${fmt(surgeAmt)}`]);
+    if(toll > 0) rows.push(['高速/路桥费（实报）', `¥${fmt(toll)}`]);
+    if(park > 0) rows.push(['停车费（实报）', `¥${fmt(park)}`]);
+    const total = P.fee + kmFee + pickup + surgeAmt + toll + park;
+    return { total, rows, dist, wait:0, tier:{label:'代泊车'}, startFee:P.fee, kmFee, waitFee:0, toll, park };
+  }
+
+  // ===== 日常模式 =====
+  const {tier} = activeTier();
+  const startFee = tier.fee;
+  const rows = [];
+  rows.push([`起步价（${tier.label} ${pad2(tier.s)}:00-${pad2(tier.e)}:00）`, `¥${fmt(startFee)}`]);
+  rows.push([`含 ${RATE.includeKm} km 内`, '']);
+
+  let kmFee = 0;
+  const over = dist - RATE.includeKm;
+  if(over > 0){
+    if(RATE.overMode === 'unit'){
+      const real = Math.ceil(over * 10) / 10;
+      kmFee = real * RATE.overPrice;
+      rows.push([`超里程 ${real.toFixed(1)}km × ¥${RATE.overPrice}/km`, `¥${fmt(kmFee)}`]);
+    } else {
+      const blocks = Math.ceil(over / RATE.blockKm);
+      kmFee = blocks * RATE.blockFee;
+      rows.push([`超 ${over.toFixed(1)}km，按 ${blocks} 个${RATE.blockKm}km段 × ¥${RATE.blockFee}`, `¥${fmt(kmFee)}`]);
+    }
+  }
+
+  const overWait = Math.max(0, wait - RATE.freeWait);
+  let waitFee = overWait * RATE.waitFee;
+  if(RATE.waitCap && waitFee > RATE.waitCap) waitFee = RATE.waitCap;
+  if(wait > 0){
+    rows.push([`等候 ${wait} 分钟（免费 ${RATE.freeWait}）`, waitFee>0 ? `¥${fmt(waitFee)}` : '免费']);
+  }
+
+  const surgeAmt = (startFee + kmFee + waitFee) * surgePct/100;
+  if(pickup > 0) rows.push(['接驾费（远途调度）', `¥${fmt(pickup)}`]);
+  if(surgePct > 0) rows.push([`临时调价 +${surgePct}%`, `¥${fmt(surgeAmt)}`]);
+  if(toll > 0) rows.push(['高速/路桥费（实报）', `¥${fmt(toll)}`]);
+  if(park > 0) rows.push(['停车费（实报）', `¥${fmt(park)}`]);
+
+  const total = startFee + kmFee + waitFee + pickup + surgeAmt + toll + park;
+  return { total, rows, dist, wait, tier, startFee, kmFee, waitFee, toll, park };
+}
+
+function renderTierGrid(){
+  const g = $('tierGrid');
+  const {idx} = activeTier();
+  g.innerHTML = RATE.tiers.map((t,i)=>{
+    const h = `${pad2(t.s)}:00-${pad2(t.e)}:00`;
+    return `<div class="t ${i===idx?'on':''}" data-i="${i}">
+      <span class="p">¥${t.fee}</span>${t.label}<br><span style="font-weight:400">${h}</span>
+    </div>`;
+  }).join('');
+  g.querySelectorAll('.t').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const i = parseInt(el.dataset.i);
+      manualTierIdx = (manualTierIdx === i) ? -1 : i;
+      render();
+    });
+  });
+}
+
+function renderRateBody(){
+  const b = $('rateBody');
+  let html = '';
+  // 日常模式参数
+  html += `<div style="font-size:12px;color:var(--sub);margin:8px 0 4px;font-weight:600;">日常代驾</div>`;
+  html += `<div class="field"><span class="k">含起步里程<small>km</small></span><input data-k="includeKm" type="number" step="0.5" value="${RATE.includeKm}"></div>`;
+  if(RATE.overMode === 'unit'){
+    html += `<div class="field"><span class="k">超里程单价<small>元/km</small></span><input data-k="overPrice" type="number" step="0.1" value="${RATE.overPrice}"></div>`;
+  } else {
+    html += `<div class="field"><span class="k">超里程整段<small>km/段</small></span><input data-k="blockKm" type="number" step="1" value="${RATE.blockKm}"></div>`;
+    html += `<div class="field"><span class="k">每段加收<small>元</small></span><input data-k="blockFee" type="number" step="1" value="${RATE.blockFee}"></div>`;
+  }
+  RATE.tiers.forEach((t,i)=>{
+    html += `<div class="field"><span class="k">${t.label}时段起步价<small>${pad2(t.s)}:00-${pad2(t.e)}:00</small></span><input data-t="${i}" type="number" step="1" value="${t.fee}"></div>`;
+  });
+  html += `<div class="field"><span class="k">免费等候<small>分钟</small></span><input data-k="freeWait" type="number" value="${RATE.freeWait}"></div>`;
+  html += `<div class="field"><span class="k">等候费<small>元/分钟</small></span><input data-k="waitFee" type="number" step="0.5" value="${RATE.waitFee}"></div>`;
+  
+  // 长途模式参数
+  if(RATE.long){
+    const L = RATE.long;
+    html += `<div style="font-size:12px;color:var(--sub);margin:16px 0 4px;font-weight:600;">长途代驾</div>`;
+    L.packages.forEach((p,i)=>{
+      html += `<div class="field"><span class="k">${p.name}<small>含${p.km}km</small></span><input data-lp="${i}" type="number" step="10" value="${p.fee}"></div>`;
+    });
+    html += `<div class="field"><span class="k">超里程段<small>km/段</small></span><input data-lk="overBlockKm" type="number" step="5" value="${L.overBlockKm}"></div>`;
+    html += `<div class="field"><span class="k">每段加收<small>元</small></span><input data-lk="overBlockFee" type="number" step="10" value="${L.overBlockFee}"></div>`;
+    html += `<div class="field"><span class="k">长途免费等候<small>分钟</small></span><input data-lk="freeWait" type="number" step="5" value="${L.freeWait}"></div>`;
+    html += `<div class="field"><span class="k">长途等候费<small>元/分钟</small></span><input data-lk="waitFee" type="number" step="1" value="${L.waitFee}"></div>`;
+  }
+
+  // 商务模式参数
+  if(RATE.business){
+    const B = RATE.business;
+    html += `<div style="font-size:12px;color:var(--sub);margin:16px 0 4px;font-weight:600;">商务代驾</div>`;
+    html += `<div class="field"><span class="k">商务基础费<small>${B.baseHours}小时</small></span><input data-bk="baseFee" type="number" step="50" value="${B.baseFee}"></div>`;
+    html += `<div class="field"><span class="k">超时费<small>元/小时</small></span><input data-bk="overtimeFee" type="number" step="10" value="${B.overtimeFee}"></div>`;
+  }
+
+  // 代泊车参数
+  if(RATE.parking){
+    const P = RATE.parking;
+    html += `<div style="font-size:12px;color:var(--sub);margin:16px 0 4px;font-weight:600;">代泊车</div>`;
+    html += `<div class="field"><span class="k">代泊车一口价<small>含${P.includeKm}km</small></span><input data-pk="fee" type="number" step="5" value="${P.fee}"></div>`;
+  }
+
+  html += `<div style="margin-top:16px;"><button class="ghost" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:transparent;cursor:pointer;font-size:13px;" id="resetRate">恢复${PRESETS[platform].name}默认</button></div>`;
+  b.innerHTML = html;
+
+  b.querySelectorAll('input[data-k]').forEach(inp=>{
+    inp.addEventListener('input', ()=>{
+      const v = parseFloat(inp.value); if(!isNaN(v)){ RATE[inp.dataset.k] = v; render(); }
+    });
+  });
+  b.querySelectorAll('input[data-t]').forEach(inp=>{
+    inp.addEventListener('input', ()=>{
+      const v = parseFloat(inp.value); if(!isNaN(v)){ RATE.tiers[parseInt(inp.dataset.t)].fee = v; render(); }
+    });
+  });
+  // 长途参数绑定
+  if(RATE.long){
+    b.querySelectorAll('input[data-lp]').forEach(inp=>{
+      inp.addEventListener('input', ()=>{
+        const v = parseFloat(inp.value); if(!isNaN(v)){ RATE.long.packages[parseInt(inp.dataset.lp)].fee = v; render(); }
+      });
+    });
+    b.querySelectorAll('input[data-lk]').forEach(inp=>{
+      inp.addEventListener('input', ()=>{
+        const v = parseFloat(inp.value); if(!isNaN(v)){ RATE.long[inp.dataset.lk] = v; render(); }
+      });
+    });
+  }
+  // 商务参数绑定
+  if(RATE.business){
+    b.querySelectorAll('input[data-bk]').forEach(inp=>{
+      inp.addEventListener('input', ()=>{
+        const v = parseFloat(inp.value); if(!isNaN(v)){ RATE.business[inp.dataset.bk] = v; render(); }
+      });
+    });
+  }
+  // 代泊车参数绑定
+  if(RATE.parking){
+    b.querySelectorAll('input[data-pk]').forEach(inp=>{
+      inp.addEventListener('input', ()=>{
+        const v = parseFloat(inp.value); if(!isNaN(v)){ RATE.parking[inp.dataset.pk] = v; render(); }
+      });
+    });
+  }
+  $('resetRate').addEventListener('click', ()=>{
+    RATE = clonePreset(platform); manualTierIdx = -1; render(); toast('已恢复默认');
+  });
+}
+
+function renderPkgGrid(){
+  const g = $('pkgGrid');
+  const L = RATE.long;
+  if(!L){ g.innerHTML=''; return; }
+  g.innerHTML = L.packages.map((p,i)=>`
+    <div class="t ${i===longPkgIdx?'on':''}" data-i="${i}">
+      <span class="p">¥${p.fee}</span>${p.name}<br><span style="font-weight:400">含${p.km}km${p.hours?`/${p.hours}h`:''}</span>
+    </div>`).join('');
+  g.querySelectorAll('.t').forEach(el=>{
+    el.addEventListener('click', ()=>{ longPkgIdx = parseInt(el.dataset.i); render(); });
+  });
+  $('longRuleTip').textContent = `超 ${L.packages[Math.min(longPkgIdx,L.packages.length-1)].km}km 后：每 ${L.overBlockKm}km 加收 ¥${L.overBlockFee}，不足 ${L.overBlockKm}km 按 ${L.overBlockKm}km 计；免费等候 ${L.freeWait} 分钟`;
+}
+
+function render(){
+  const r = calc();
+  $('total').textContent = fmt(r.total);
+  const isLong = serviceType==='long' && RATE.long;
+  const isBiz = serviceType==='business' && RATE.business;
+  const isPark = serviceType==='parking' && RATE.parking;
+  $('resultTitle').textContent = PRESETS[platform].name + (sceneTag?' · '+sceneTag :'') + (isLong?' · 长途':isBiz?' · 商务':isPark?' · 代泊车':'') + ' · 预估总费用';
+  $('detail').innerHTML = r.rows.map(([k,v])=>
+    `<div class="row"><span>${k}</span><b>${v}</b></div>`).join('');
+
+  $('pkgCard').style.display = isLong ? 'block' : 'none';
+  $('bizCard').style.display = isBiz ? 'block' : 'none';
+  const hideInSpecial = isLong || isBiz || isPark;
+  document.querySelectorAll('.card').forEach(c=>{
+    if(c.querySelector('#tierGrid')) c.style.display = hideInSpecial ? 'none' : 'block';
+    if(c.querySelector('#dist')) c.style.display = (isBiz||isPark) ? 'none' : 'block';
+    if(c.querySelector('#waitVal')) c.style.display = (isBiz||isPark) ? 'none' : 'block';
+  });
+
+  if(isLong){
+    renderPkgGrid();
+    $('waitTip').textContent = `免费${RATE.long.freeWait}分钟，超¥${RATE.long.waitFee}/分`;
+    const badge = $('autoBadge');
+    badge.textContent = '长途';
+    badge.className = 'badge t1';
+  } else if(isBiz){
+    const B = RATE.business;
+    $('bizTip').textContent = `${pad2(B.workStart)}:00-${pad2(B.workEnd)}:00`;
+    $('bizRuleTip').textContent = `${B.baseFee}元/${B.baseHours}小时，超时每小时¥${B.overtimeFee}，最晚${pad2(B.overtimeLimit)}:00；不足${B.minHours}小时按${B.minHours}小时计`;
+    $('bizVal').textContent = businessHours;
+    const badge = $('autoBadge');
+    badge.textContent = '商务';
+    badge.className = 'badge t2';
+  } else if(isPark){
+    const badge = $('autoBadge');
+    badge.textContent = '代泊车';
+    badge.className = 'badge t3';
+  } else {
+    $('curTierName').textContent = r.tier.label + '时段';
+    $('curTierFee').textContent = r.tier.fee;
+    $('curTierInclude').textContent = `含 ${RATE.includeKm}km`;
+    $('tierTip').textContent = manualTierIdx>=0 ? '已手动选择（再点取消）' : '按当前时间自动';
+
+    const badge = $('autoBadge');
+    badge.textContent = r.tier.label;
+    badge.className = 'badge t' + (activeTier().idx+1);
+
+    if(RATE.overMode === 'unit'){
+      $('overRuleTip').textContent = `超出 ${RATE.includeKm}km 后：¥${RATE.overPrice}/km（不足0.1km按0.1km计）`;
+    } else {
+      $('overRuleTip').textContent = `超出 ${RATE.includeKm}km 后：每满 ${RATE.blockKm}km 加收 ¥${RATE.blockFee}，不足 ${RATE.blockKm}km 按 ${RATE.blockKm}km 计`;
+    }
+    $('waitTip').textContent = `免费${RATE.freeWait}分钟，超¥${RATE.waitFee}/分${RATE.waitCap?`，封顶¥${RATE.waitCap}`:''}`;
+    renderTierGrid();
+  }
+  renderRateBody();
+  saveState(); // 所有状态自动保存
+}
+
+/* ===== 高德请求（走服务端代理，Key 不暴露在前端） ===== */
+async function amapGet(path, params){
+  params = Object.assign({path: path}, params);
+  const qs = Object.entries(params).map(([k,v])=>`${k}=${encodeURIComponent(v)}`).join('&');
+  const url = `${AMAP_PROXY}?${qs}`;
+  const r = await fetch(url);
+  const data = await r.json();
+  if(data.status !== '1') throw new Error(data.info || '请求失败');
+  return data;
+}
+
+/* ===== 高德测距 ===== */
+let currentCity = localStorage.getItem('dj_city') || '宁波';
+async function resolveLocation(text, coordAttr){
+  if(coordAttr) return coordAttr;
+  const data = await amapGet('/v3/geocode/geo', {address: text, city: currentCity});
+  if(!data.geocodes || !data.geocodes.length) throw new Error(`未找到「${text}」，请写详细点`);
+  return data.geocodes[0].location;
+}
+// 初始化城市选择
+$('citySelect').value = currentCity;
+$('citySelect').addEventListener('change', e=>{
+  currentCity = e.target.value;
+  localStorage.setItem('dj_city', currentCity);
+  toast(`已切换城市：${currentCity}`);
+});
+let autoTimer = null;
+async function autoCalcDist(showToast = true){
+  const sp = $('startPoint').value.trim();
+  const ep = $('endPoint').value.trim();
+  if(!sp || !ep) return;
+  const btn = $('calcDistBtn');
+  btn.disabled = true; btn.textContent = '测距中…';
+  try{
+    const origin = await resolveLocation(sp, $('startPoint').dataset.loc);
+    const destination = await resolveLocation(ep, $('endPoint').dataset.loc);
+    const data = await amapGet('/v3/direction/driving', {origin, destination, extensions: 'base'});
+    const path = data.route.paths[0];
+    const km = path.distance / 1000;
+    const min = Math.round(path.duration / 60);
+    $('dist').value = km.toFixed(1);
+    const slider = $('distSlider');
+    if(km > parseFloat(slider.max)) slider.max = Math.ceil(km/100)*100;
+    slider.value = km;
+    const info = $('routeInfo');
+    info.style.display = 'block';
+    info.innerHTML = `🚗 驾车里程 <b>${km.toFixed(1)} km</b> · 预计行驶 ${min} 分钟`;
+    render();
+    if(showToast) toast('距离已自动填入');
+  }catch(err){
+    if(showToast) toast(err.message || '测距失败');
+  }finally{
+    btn.disabled = false; btn.textContent = '自动测距中…';
+  }
+}
+$('calcDistBtn').addEventListener('click', ()=>autoCalcDist(true));
+// 终点输入停顿600ms后自动测距
+$('endPoint').addEventListener('input', ()=>{
+  clearTimeout(autoTimer);
+  autoTimer = setTimeout(()=>autoCalcDist(false), 600);
+});
+function doLocate(silent = false){
+  if(!navigator.geolocation) return;
+  if(!silent) toast('正在定位…');
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    const {longitude, latitude} = pos.coords;
+    const coord = `${longitude.toFixed(6)},${latitude.toFixed(6)}`;
+    $('startPoint').dataset.loc = coord;
+    try{
+      const data = await amapGet('/v3/geocode/regeo', {location: coord});
+      $('startPoint').value = data.regeocode.formatted_address || `当前位置`;
+      // 自动同步当前城市
+      const locatedCity = data.regeocode.addressComponent.city || data.regeocode.addressComponent.province;
+      if(locatedCity){
+        currentCity = locatedCity.replace(/市$/, '');
+        $('citySelect').value = currentCity;
+        localStorage.setItem('dj_city', currentCity);
+      }
+      if(!silent) toast('已定位当前位置');
+    }catch(e){
+      $('startPoint').value = `当前位置 ${latitude.toFixed(3)},${longitude.toFixed(3)}`;
+      if(!silent) toast('已填入坐标');
+    }
+  }, ()=>{ if(!silent) toast('定位失败，请检查浏览器权限'); }, {timeout:5000});
+}
+$('locateBtn').addEventListener('click', ()=>doLocate(false));
+
+// 页面加载完成后自动静默定位（不弹toast，用户授权就自动填起点）
+setTimeout(()=>doLocate(true), 1500);
+
+/* ===== 事件 ===== */
+$('dist').addEventListener('input', e=>{
+  const v = parseFloat(e.target.value)||0;
+  // 如果输入值超过滑块当前最大值，自动扩展滑块上限
+  const slider = $('distSlider');
+  if(v > parseFloat(slider.max)) slider.max = Math.ceil(v/100)*100;
+  slider.value = v;
+  render();
+});
+$('distSlider').addEventListener('input', e=>{ $('dist').value = e.target.value; render(); });
+document.querySelectorAll('.chip').forEach(c=>{
+  c.addEventListener('click', ()=>{
+    $('dist').value = c.dataset.d; $('distSlider').value = c.dataset.d; render();
+  });
+});
+$('waitPlus').addEventListener('click', ()=>{ $('waitVal').textContent = parseInt($('waitVal').textContent)+1; render(); });
+$('waitMinus').addEventListener('click', ()=>{ $('waitVal').textContent = Math.max(0, parseInt($('waitVal').textContent)-1); render(); });
+document.querySelectorAll('[data-w]').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    const add = parseInt(chip.dataset.w);
+    const cur = parseInt($('waitVal').textContent);
+    $('waitVal').textContent = add === 0 ? 0 : Math.max(0, cur + add);
+    render();
+  });
+});
+['toll','park','pickup','surge'].forEach(id=>$(id).addEventListener('input', render));
+
+$('platformSeg').addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  platform = b.dataset.p;
+  RATE = clonePreset(platform);
+  manualTierIdx = -1;
+  longPkgIdx = 0;
+  // 切平台时若无对应模式，自动切回日常
+  if((!RATE.long && serviceType==='long') || (!RATE.business && serviceType==='business') || (!RATE.parking && serviceType==='parking')){
+    serviceType = 'normal';
+    document.querySelectorAll('#serviceSeg button').forEach(x=>x.classList.toggle('on', x.dataset.s==='normal'));
+  }
+  document.querySelectorAll('#platformSeg button').forEach(x=>x.classList.toggle('on', x===b));
+  render();
+  toast('已切换：' + PRESETS[platform].name);
+});
+
+$('serviceSeg').addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  const s = b.dataset.s;
+  if(s==='long' && !RATE.long){ toast('该平台暂无长途套餐'); return; }
+  if(s==='business' && !RATE.business){ toast('该平台暂无商务套餐'); return; }
+  if(s==='parking' && !RATE.parking){ toast('该平台暂无代泊车一口价'); return; }
+  serviceType = s;
+  longPkgIdx = 0;
+  document.querySelectorAll('#serviceSeg button').forEach(x=>x.classList.toggle('on', x===b));
+  render();
+});
+$('bizPlus').addEventListener('click', ()=>{ businessHours = Math.min(14, businessHours+1); render(); });
+document.querySelectorAll('#sceneChips .chip').forEach(ch=>{
+  ch.addEventListener('click', ()=>{
+    sceneTag = (sceneTag === ch.dataset.sc) ? '' : ch.dataset.sc;
+    document.querySelectorAll('#sceneChips .chip').forEach(x=>x.style.background = x===ch && sceneTag ? '#dbeafe' : '');
+    render();
+  });
+});
+$('bizMinus').addEventListener('click', ()=>{ businessHours = Math.max(1, businessHours-1); render(); });
+
+/* ===== 历史 ===== */
+function getHist(){ try{ return JSON.parse(localStorage.getItem('dj_hist2')||'[]'); }catch(e){ return []; } }
+function setHist(h){ localStorage.setItem('dj_hist2', JSON.stringify(h.slice(-50))); }
+function renderHist(){
+  const h = getHist();
+  $('histCount').textContent = h.length ? `(${h.length} 条)` : '';
+  if(!h.length){ $('histList').innerHTML = '<div class="empty">暂无记录</div>'; return; }
+  $('histList').innerHTML = h.slice().reverse().map(it=>{
+    let summary = '';
+    if(it.mode === 'business'){
+      summary = `商务代驾 · ${it.extra||8}小时`;
+    } else if(it.mode === 'long'){
+      summary = `长途代驾 · ${it.dist}km`;
+    } else if(it.mode === 'parking'){
+      summary = `代泊车 · ${it.dist}km`;
+    } else {
+      summary = `${it.dist}km · ${it.tier} · 等候${it.wait}分`;
+    }
+    return `<div class="hist-item">
+      <div><div><b>${it.platform}</b> · ${summary}</div>
+        <div class="meta">${it.time}</div></div>
+      <div class="price">¥${fmt(it.total)}</div>
+    </div>`;
+  }).join('');
+}
+$('saveBtn').addEventListener('click', ()=>{
+  const r = calc();
+  const h = getHist();
+  const record = { 
+    total:r.total, dist:r.dist, wait:r.wait, tier:r.tier.label, 
+    platform:PRESETS[platform].name,
+    mode: serviceType,
+    extra: serviceType === 'business' ? businessHours : (longPkgIdx+1),
+    time: new Date().toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) 
+  };
+  h.push(record);
+  setHist(h); renderHist(); toast('已记录');
+});
+$('copyBtn').addEventListener('click', ()=>{
+  const r = calc();
+  const sp = $('startPoint').value.trim();
+  const ep = $('endPoint').value.trim();
+  const scene = sceneTag ? `【${sceneTag}】` : '';
+  let titlePrefix = '';
+  if(serviceType === 'long') titlePrefix = '长途';
+  else if(serviceType === 'business') titlePrefix = '商务';
+  else if(serviceType === 'parking') titlePrefix = '代泊车';
+  const titlePart = titlePrefix ? `· ${titlePrefix} ` : '';
+  const lines = [
+    sp||ep ? `【${PRESETS[platform].name}${scene}${titlePrefix?`·${titlePrefix}`:''}报价】${sp?'从'+sp:''}${sp&&ep?' → ':''}${ep?'到'+ep:''}` : 
+      (serviceType==='business' ? `【${PRESETS[platform].name}${scene}商务报价】${businessHours}小时` :
+        `【${PRESETS[platform].name}${scene}${titlePrefix}报价】${r.dist}km · ${r.tier.label}时段`),
+    ...r.rows.map(([k,v])=> v?`${k}：${v}`:k),
+    `——`, `合计：¥${fmt(r.total)}`
+  ].filter(Boolean).join('\n');
+  navigator.clipboard.writeText(lines).then(()=>toast('报价已复制')).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=lines;document.body.appendChild(ta);
+    ta.select();document.execCommand('copy');ta.remove();toast('报价已复制');
+  });
+});
+
+function tick(){
+  const d = new Date();
+  $('clock').textContent = pad2(d.getHours())+':'+pad2(d.getMinutes());
+}
+setInterval(tick, 1000*20); tick();
+
+loadState(); // 先恢复上次所有设置
+render();
+renderHist();
+
+// 注册PWA Service Worker
+if('serviceWorker' in navigator && location.protocol === 'https:'){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('./sw.js').catch(err=>console.log('SW注册失败:', err));
+  });
+}
+</script>
+</body>
+</html>

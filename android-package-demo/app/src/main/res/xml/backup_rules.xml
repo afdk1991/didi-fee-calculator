@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 传统备份规则（Android 11 及以下） -->
+<full-backup-content>
+    <!-- 演示用留空 -->
+</full-backup-content>

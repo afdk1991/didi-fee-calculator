@@ -1,0 +1,12 @@
+## 【local.properties 模板】
+## 此文件不应提交到 Git，用于指定本机 Android SDK 路径。
+## 使用时：复制本文件为 local.properties，替换下面的路径为你本机的 SDK 路径。
+
+## Windows 示例：
+sdk.dir=C\:\\Users\\YourName\\AppData\\Local\\Android\\Sdk
+
+## macOS 示例：
+# sdk.dir=/Users/YourName/Library/Android/sdk
+
+## Linux 示例：
+# sdk.dir=/home/YourName/Android/Sdk

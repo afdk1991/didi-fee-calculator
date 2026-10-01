@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+ 备份规则（data extraction rules） -->
+<data-extraction-rules>
+    <cloud-backup>
+        <!-- 此处声明需要备份/排除的文件，演示用留空 -->
+    </cloud-backup>
+    <device-transfer>
+    </device-transfer>
+</data-extraction-rules>

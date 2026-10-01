@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>代驾收费计算器</title>
+<style>
+  :root{
+    --bg:#f1f5f9; --card:#ffffff; --ink:#0f172a; --sub:#64748b;
+    --line:#e2e8f0; --brand:#2563eb; --brand-d:#1d4ed8;
+    --radius:16px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    font-size:16px;line-height:1.5;padding-bottom:env(safe-area-inset-bottom);
+    width:100%;max-width:100%;overflow-x:hidden;}
+  .app{max-width:480px;margin:0 auto;padding:16px 14px 40px;width:100%;overflow:hidden;}
+
+  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .title{font-size:19px;font-weight:700;letter-spacing:.5px;}
+  .title small{display:block;font-size:12px;color:var(--sub);font-weight:400;margin-top:2px;}
+  .clock{font-size:12px;color:var(--sub);text-align:right;}
+  .clock .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;margin-top:4px;}
+  .badge.t1{background:#dcfce7;color:#166534;}
+  .badge.t2{background:#fef3c7;color:#92400e;}
+  .badge.t3{background:#ffedd5;color:#9a3412;}
+  .badge.t4{background:#dbeafe;color:#1e40af;}
+
+  .platform{display:flex;gap:6px;background:var(--card);padding:6px;border-radius:14px;margin-bottom:12px;box-shadow:0 1px 2px rgba(15,23,42,.04);}
+  .platform button{flex:1;min-width:0;border:none;background:transparent;padding:11px 0;border-radius:10px;
+    font-size:14px;font-weight:600;color:var(--sub);cursor:pointer;white-space:nowrap;}
+  .platform button.on{background:var(--brand);color:#fff;box-shadow:0 2px 8px rgba(37,99,235,.35);}
+
+  .card{background:var(--card);border-radius:var(--radius);padding:16px;margin-bottom:12px;
+    box-shadow:0 1px 2px rgba(15,23,42,.04);overflow:hidden;}
+  .label{font-size:13px;color:var(--sub);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;}
+  .label > span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+  .route-input{display:flex;align-items:center;gap:8px;}
+  .route-input .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+  .route-input .dot.start{background:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,.15);}
+  .route-input .dot.end{background:#ef4444;box-shadow:0 0 0 3px rgba(239,68,68,.15);}
+  .route-input input{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:10px 12px;
+    font-size:14px;outline:none;background:var(--bg);color:var(--ink);}
+  .route-input input:focus{border-color:var(--brand);background:#fff;}
+  .locate{border:none;background:var(--bg);width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:18px;flex-shrink:0;}
+  .route-line{width:2px;height:14px;background:var(--line);margin:4px 0 4px 4px;}
+  .block{width:100%;padding:13px;margin-top:12px;border:none;border-radius:12px;}
+  .block:disabled{opacity:.6;cursor:not-allowed;}
+  .route-info{margin-top:10px;font-size:13px;color:var(--sub);background:var(--bg);padding:10px 12px;border-radius:10px;line-height:1.5;}
+  .route-info b{color:var(--brand);}
+  .key-tip{font-size:11px;color:var(--sub);margin-top:6px;line-height:1.5;}
+  .key-tip a{color:var(--brand);text-decoration:none;}
+
+  .dist-display{display:flex;align-items:baseline;justify-content:center;gap:6px;padding:6px 0 2px;}
+  .dist-display input{width:170px;font-size:46px;font-weight:700;text-align:center;border:none;
+    background:transparent;color:var(--ink);outline:none;border-bottom:2px dashed var(--line);}
+  .dist-display .unit{font-size:18px;color:var(--sub);font-weight:500;}
+  .slider-row{margin-top:10px;}
+  input[type=range]{width:100%;-webkit-appearance:none;height:6px;border-radius:3px;background:var(--line);outline:none;display:block;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;
+    background:var(--brand);cursor:pointer;box-shadow:0 2px 6px rgba(37,99,235,.4);border:3px solid #fff;}
+  .dist-quick{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+  .chip{flex:1 1 30%;min-width:56px;padding:8px 0;text-align:center;background:var(--bg);border-radius:10px;
+    font-size:13px;color:var(--ink);cursor:pointer;border:1px solid transparent;}
+  .chip:active{background:#e2e8f0;}
+
+  .tier-info{background:var(--bg);border-radius:12px;padding:12px;margin-top:10px;}
+  .tier-info .cur{display:flex;justify-content:space-between;align-items:baseline;}
+  .tier-info .cur .name{font-size:14px;font-weight:600;}
+  .tier-info .cur .fee{font-size:22px;font-weight:700;color:var(--brand);}
+  .tier-info .cur .fee small{font-size:12px;color:var(--sub);font-weight:400;}
+  .tier-grid{display:flex;gap:4px;margin-top:10px;}
+  .tier-grid .t{flex:1;text-align:center;padding:6px 2px;border-radius:8px;font-size:11px;color:var(--sub);cursor:pointer;}
+  .tier-grid .t.on{background:#fff;color:var(--brand);font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.08);}
+  .tier-grid .t .p{font-size:13px;font-weight:700;color:var(--ink);display:block;}
+  .tier-grid .t.on .p{color:var(--brand);}
+
+  .stepper{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .stepper .val{flex:1;text-align:center;font-size:22px;font-weight:600;}
+  .stepper .val small{font-size:12px;color:var(--sub);font-weight:400;display:block;}
+  .btn{width:44px;height:44px;border-radius:12px;border:none;background:var(--bg);font-size:22px;
+    color:var(--ink);cursor:pointer;font-weight:600;flex-shrink:0;}
+  .btn:active{background:#e2e8f0;}
+
+  .result{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;border-radius:var(--radius);
+    padding:20px 18px;margin-bottom:12px;box-shadow:0 6px 20px rgba(37,99,235,.3);}
+  .result .rl{font-size:13px;opacity:.85;}
+  .result .rt{font-size:42px;font-weight:700;margin:4px 0 10px;letter-spacing:1px;}
+  .detail{font-size:13px;line-height:1.9;border-top:1px solid rgba(255,255,255,.2);padding-top:10px;}
+  .detail .row{display:flex;justify-content:space-between;gap:10px;}
+  .detail .row > span{min-width:0;word-break:break-all;}
+  .detail .row b{font-weight:600;white-space:nowrap;}
+
+  details{background:var(--card);border-radius:var(--radius);margin-bottom:12px;overflow:hidden;}
+  details summary{list-style:none;cursor:pointer;padding:15px 18px;font-weight:600;font-size:15px;
+    display:flex;justify-content:space-between;align-items:center;}
+  details summary::-webkit-details-marker{display:none;}
+  details summary::after{content:"▾";color:var(--sub);transition:transform .2s;}
+  details[open] summary::after{transform:rotate(180deg);}
+  details .body{padding:0 18px 16px;}
+
+  .field{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px dashed var(--line);gap:10px;}
+  .field:last-child{border-bottom:none;}
+  .field .k{font-size:14px;min-width:0;}
+  .field .k small{display:block;font-size:11px;color:var(--sub);}
+  .field input{width:90px;padding:8px;text-align:right;border:1px solid var(--line);border-radius:8px;
+    font-size:15px;background:var(--bg);outline:none;flex-shrink:0;}
+  .field input:focus{border-color:var(--brand);}
+
+  .actions{display:flex;gap:10px;margin-top:4px;}
+  .actions button{flex:1;padding:14px 0;border-radius:12px;border:none;font-size:15px;font-weight:600;cursor:pointer;}
+  .primary{background:var(--brand);color:#fff;}
+  .primary:active{background:var(--brand-d);}
+  .ghost{background:var(--card);color:var(--ink);border:1px solid var(--line)!important;}
+
+  .hist-item{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);font-size:14px;gap:10px;}
+  .hist-item:last-child{border-bottom:none;}
+  .hist-item .meta{color:var(--sub);font-size:12px;margin-top:2px;}
+  .hist-item .price{font-weight:700;color:var(--brand);font-size:16px;white-space:nowrap;}
+  .empty{text-align:center;color:var(--sub);font-size:13px;padding:20px 0;}
+
+  .note{font-size:11px;color:var(--sub);line-height:1.6;margin-top:10px;padding:8px 10px;background:var(--bg);border-radius:8px;}
+
+  .toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:rgba(15,23,42,.9);
+    color:#fff;padding:10px 18px;border-radius:999px;font-size:13px;opacity:0;pointer-events:none;
+    transition:opacity .25s;z-index:99;max-width:90%;text-align:center;}
+  .toast.show{opacity:1;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="title">代驾收费计算器<small>滴滴 · E代驾 · 通用 一键切换</small></div>
+    <div class="clock">
+      <div id="clock">--:--</div>
+      <span class="badge t1" id="autoBadge">--</span>
+    </div>
+  </div>
+
+  <div class="platform" id="platformSeg">
+    <button data-p="general">通用</button>
+    <button data-p="didi" class="on">滴滴代驾</button>
+    <button data-p="edaijia">E代驾</button>
+  </div>
+
+  <div class="card">
+    <div class="label"><span>行程起终点</span><span>选填 · 自动测距</span></div>
+    <div class="route-input">
+      <div class="dot start"></div>
+      <input id="startPoint" type="text" placeholder="起点，如：鄞州万达广场" autocomplete="off">
+      <button class="locate" id="locateBtn" title="使用当前位置">📍</button>
+    </div>
+    <div class="route-line"></div>
+    <div class="route-input">
+      <div class="dot end"></div>
+      <input id="endPoint" type="text" placeholder="终点，如：江北来福士" autocomplete="off">
+    </div>
+    <button class="primary block" id="calcDistBtn">获取驾车距离</button>
+    <details class="keybox" style="margin-top:10px;">
+      <summary style="font-size:12px;color:var(--sub);cursor:pointer;list-style:none;padding:4px 0;display:flex;justify-content:space-between;align-items:center;">
+        <span>⚙️ 高德地图 Key</span><span id="keyStatus" style="font-size:11px;color:#10b981;">已配置</span>
+      </summary>
+      <div style="padding:6px 0 2px;">
+        <div style="font-size:11px;color:var(--sub);margin-bottom:4px;">Web 服务 Key</div>
+        <input id="f_amapKey" type="text" placeholder="粘贴高德 Web 服务 Key" autocomplete="off"
+          style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:13px;font-family:monospace;outline:none;background:var(--bg);box-sizing:border-box;">
+        <div style="font-size:11px;color:var(--sub);margin:10px 0 4px;">安全密钥 <span style="color:#94a3b8;">（选填，仅当控制台开启了「数字签名」时需要）</span></div>
+        <input id="f_amapSecret" type="text" placeholder="粘贴安全密钥（32位）" autocomplete="off"
+          style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:13px;font-family:monospace;outline:none;background:var(--bg);box-sizing:border-box;">
+        <div class="key-tip">免费申请：<a href="https://lbs.amap.com/" target="_blank" rel="noopener">lbs.amap.com</a> → 控制台 → 创建「Web服务」类型 Key</div>
+      </div>
+    </details>
+    <div id="routeInfo" class="route-info" style="display:none"></div>
+  </div>
+
+  <div class="card">
+    <div class="label"><span>行驶里程</span><span>公里 (km)</span></div>
+    <div class="dist-display">
+      <input id="dist" type="number" inputmode="decimal" min="0" step="0.1" value="10">
+      <span class="unit">km</span>
+    </div>
+    <div class="slider-row"><input id="distSlider" type="range" min="0" max="100" step="0.5" value="10"></div>
+    <div class="dist-quick">
+      <div class="chip" data-d="3">3km</div>
+      <div class="chip" data-d="5">5km</div>
+      <div class="chip" data-d="10">10km</div>
+      <div class="chip" data-d="20">20km</div>
+      <div class="chip" data-d="35">35km</div>
+      <div class="chip" data-d="50">50km</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="label"><span>当前时段档位</span><span id="tierTip"></span></div>
+    <div class="tier-info">
+      <div class="cur">
+        <span class="name" id="curTierName">--</span>
+        <span class="fee">¥<span id="curTierFee">0</span> <small id="curTierInclude"></small></span>
+      </div>
+      <div class="tier-grid" id="tierGrid"></div>
+    </div>
+    <div class="note" id="overRuleTip"></div>
+  </div>
+
+  <div class="card">
+    <div class="label"><span>司机等候时长</span><span id="waitTip"></span></div>
+    <div class="stepper">
+      <button class="btn" id="waitMinus">−</button>
+      <div class="val"><span id="waitVal">10</span><small>分钟</small></div>
+      <button class="btn" id="waitPlus">＋</button>
+    </div>
+  </div>
+
+  <div class="result">
+    <div class="rl" id="resultTitle">预估总费用</div>
+    <div class="rt">¥<span id="total">0.00</span></div>
+    <div class="detail" id="detail"></div>
+  </div>
+
+  <details>
+    <summary>其他实报费用</summary>
+    <div class="body">
+      <div class="field"><span class="k">高速 / 路桥费</span><input id="toll" type="number" inputmode="decimal" min="0" step="1" value="0"></div>
+      <div class="field"><span class="k">停车费</span><input id="park" type="number" inputmode="decimal" min="0" step="1" value="0"></div>
+    </div>
+  </details>
+
+  <details>
+    <summary>费率微调 & 高德 Key</summary>
+    <div class="body" id="rateBody"></div>
+  </details>
+
+  <div class="actions">
+    <button class="ghost" id="saveBtn">记录本次</button>
+    <button class="primary" id="copyBtn">复制报价</button>
+  </div>
+
+  <details>
+    <summary>最近记录 <span id="histCount" style="font-size:12px;color:var(--sub);font-weight:400;"></span></summary>
+    <div class="body" id="histList"><div class="empty">暂无记录</div></div>
+  </details>
+
+  <div class="note" style="margin:0 4px;">
+    数据来源：滴滴代驾 / E代驾公开价格表（2025-2026），实际计费以平台APP发单时为准；不同城市、天气、动态加价可能有差异。
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const PRESETS = {
+  general: {
+    name:'通用', includeKm:5, overMode:'unit', overPrice:3.5,
+    tiers:[
+      {s:6,  e:22, fee:18, label:'白天'},
+      {s:22, e:24, fee:28, label:'夜间'},
+      {s:0,  e:6,  fee:28, label:'凌晨'}
+    ],
+    freeWait:10, waitFee:1, waitCap:null
+  },
+  didi: {
+    name:'滴滴代驾', includeKm:8, overMode:'unit', overPrice:3.5,
+    tiers:[
+      {s:6,  e:22, fee:35, label:'日间'},
+      {s:22, e:23, fee:50, label:'22点'},
+      {s:23, e:24, fee:65, label:'23点'},
+      {s:0,  e:6,  fee:85, label:'凌晨'}
+    ],
+    freeWait:10, waitFee:1, waitCap:180
+  },
+  edaijia: {
+    name:'E代驾', includeKm:10, overMode:'block', blockKm:10, blockFee:20,
+    tiers:[
+      {s:7,  e:22, fee:40, label:'日间'},
+      {s:22, e:23, fee:60, label:'22点'},
+      {s:23, e:24, fee:80, label:'23点'},
+      {s:0,  e:7,  fee:100, label:'凌晨'}
+    ],
+    freeWait:10, waitFee:1, waitCap:null
+  }
+};
+
+let platform = 'didi';
+let manualTierIdx = -1;
+let RATE = clonePreset(platform);
+const DEFAULT_AMAP_KEY = 'c2e3174bf14a72206265e503e6c310f8';
+let amapKey = localStorage.getItem('dj_amap_key') || DEFAULT_AMAP_KEY;
+let amapSecret = localStorage.getItem('dj_amap_secret') || '';
+
+function clonePreset(k){ return JSON.parse(JSON.stringify(PRESETS[k])); }
+const $ = id => document.getElementById(id);
+function toast(t){
+  const el = $('toast'); el.textContent = t; el.classList.add('show');
+  clearTimeout(el._t); el._t = setTimeout(()=>el.classList.remove('show'), 1500);
+}
+function fmt(n){ return (Math.round(n*100)/100).toFixed(2); }
+function pad2(n){ return String(n).padStart(2,'0'); }
+
+function hourNow(){ return new Date().getHours(); }
+function findTier(h){
+  for(let i=0;i<RATE.tiers.length;i++){
+    const t = RATE.tiers[i];
+    if(t.s < t.e){ if(h >= t.s && h < t.e) return {idx:i, tier:t}; }
+    else { if(h >= t.s || h < t.e) return {idx:i, tier:t}; }
+  }
+  return {idx:0, tier:RATE.tiers[0]};
+}
+function activeTier(){
+  if(manualTierIdx >= 0 && manualTierIdx < RATE.tiers.length)
+    return {idx:manualTierIdx, tier:RATE.tiers[manualTierIdx]};
+  return findTier(hourNow());
+}
+
+function calc(){
+  const dist = Math.max(0, parseFloat($('dist').value) || 0);
+  const wait = Math.max(0, parseInt($('waitVal').textContent) || 0);
+  const toll = Math.max(0, parseFloat($('toll').value) || 0);
+  const park = Math.max(0, parseFloat($('park').value) || 0);
+
+  const {tier} = activeTier();
+  const startFee = tier.fee;
+  const rows = [];
+  rows.push([`起步价（${tier.label} ${pad2(tier.s)}:00-${pad2(tier.e)}:00）`, `¥${fmt(startFee)}`]);
+  rows.push([`含 ${RATE.includeKm} km 内`, '']);
+
+  let kmFee = 0;
+  const over = dist - RATE.includeKm;
+  if(over > 0){
+    if(RATE.overMode === 'unit'){
+      const real = Math.ceil(over * 10) / 10;
+      kmFee = real * RATE.overPrice;
+      rows.push([`超里程 ${real.toFixed(1)}km × ¥${RATE.overPrice}/km`, `¥${fmt(kmFee)}`]);
+    } else {
+      const blocks = Math.ceil(over / RATE.blockKm);
+      kmFee = blocks * RATE.blockFee;
+      rows.push([`超 ${over.toFixed(1)}km，按 ${blocks} 个${RATE.blockKm}km段 × ¥${RATE.blockFee}`, `¥${fmt(kmFee)}`]);
+    }
+  }
+
+  const overWait = Math.max(0, wait - RATE.freeWait);
+  let waitFee = overWait * RATE.waitFee;
+  if(RATE.waitCap && waitFee > RATE.waitCap) waitFee = RATE.waitCap;
+  if(wait > 0){
+    rows.push([`等候 ${wait} 分钟（免费 ${RATE.freeWait}）`, waitFee>0 ? `¥${fmt(waitFee)}` : '免费']);
+  }
+
+  if(toll > 0) rows.push(['高速/路桥费（实报）', `¥${fmt(toll)}`]);
+  if(park > 0) rows.push(['停车费（实报）', `¥${fmt(park)}`]);
+
+  const total = startFee + kmFee + waitFee + toll + park;
+  return { total, rows, dist, wait, tier, startFee, kmFee, waitFee, toll, park };
+}
+
+function renderTierGrid(){
+  const g = $('tierGrid');
+  const {idx} = activeTier();
+  g.innerHTML = RATE.tiers.map((t,i)=>{
+    const h = `${pad2(t.s)}:00-${pad2(t.e)}:00`;
+    return `<div class="t ${i===idx?'on':''}" data-i="${i}">
+      <span class="p">¥${t.fee}</span>${t.label}<br><span style="font-weight:400">${h}</span>
+    </div>`;
+  }).join('');
+  g.querySelectorAll('.t').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const i = parseInt(el.dataset.i);
+      manualTierIdx = (manualTierIdx === i) ? -1 : i;
+      render();
+    });
+  });
+}
+
+function renderRateBody(){
+  const b = $('rateBody');
+  let html = '';
+  html += `<div class="field"><span class="k">含起步里程<small>km</small></span><input data-k="includeKm" type="number" step="0.5" value="${RATE.includeKm}"></div>`;
+  if(RATE.overMode === 'unit'){
+    html += `<div class="field"><span class="k">超里程单价<small>元/km</small></span><input data-k="overPrice" type="number" step="0.1" value="${RATE.overPrice}"></div>`;
+  } else {
+    html += `<div class="field"><span class="k">超里程整段<small>km/段</small></span><input data-k="blockKm" type="number" step="1" value="${RATE.blockKm}"></div>`;
+    html += `<div class="field"><span class="k">每段加收<small>元</small></span><input data-k="blockFee" type="number" step="1" value="${RATE.blockFee}"></div>`;
+  }
+  RATE.tiers.forEach((t,i)=>{
+    html += `<div class="field"><span class="k">${t.label}时段起步价<small>${pad2(t.s)}:00-${pad2(t.e)}:00</small></span><input data-t="${i}" type="number" step="1" value="${t.fee}"></div>`;
+  });
+  html += `<div class="field"><span class="k">免费等候<small>分钟</small></span><input data-k="freeWait" type="number" value="${RATE.freeWait}"></div>`;
+  html += `<div class="field"><span class="k">等候费<small>元/分钟</small></span><input data-k="waitFee" type="number" step="0.5" value="${RATE.waitFee}"></div>`;
+  html += `<div style="margin-top:12px;"><button class="ghost" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:transparent;cursor:pointer;font-size:13px;" id="resetRate">恢复${PRESETS[platform].name}默认</button></div>`;
+  b.innerHTML = html;
+
+  b.querySelectorAll('input[data-k]').forEach(inp=>{
+    inp.addEventListener('input', ()=>{
+      const v = parseFloat(inp.value); if(!isNaN(v)){ RATE[inp.dataset.k] = v; render(); }
+    });
+  });
+  b.querySelectorAll('input[data-t]').forEach(inp=>{
+    inp.addEventListener('input', ()=>{
+      const v = parseFloat(inp.value); if(!isNaN(v)){ RATE.tiers[parseInt(inp.dataset.t)].fee = v; render(); }
+    });
+  });
+  $('resetRate').addEventListener('click', ()=>{
+    RATE = clonePreset(platform); manualTierIdx = -1; render(); toast('已恢复默认');
+  });
+}
+
+function render(){
+  const r = calc();
+  $('total').textContent = fmt(r.total);
+  $('resultTitle').textContent = PRESETS[platform].name + ' · 预估总费用';
+  $('detail').innerHTML = r.rows.map(([k,v])=>
+    `<div class="row"><span>${k}</span><b>${v}</b></div>`).join('');
+
+  $('curTierName').textContent = r.tier.label + '时段';
+  $('curTierFee').textContent = r.tier.fee;
+  $('curTierInclude').textContent = `含 ${RATE.includeKm}km`;
+  $('tierTip').textContent = manualTierIdx>=0 ? '已手动选择（再点取消）' : '按当前时间自动';
+
+  const badge = $('autoBadge');
+  badge.textContent = r.tier.label;
+  badge.className = 'badge t' + (activeTier().idx+1);
+
+  if(RATE.overMode === 'unit'){
+    $('overRuleTip').textContent = `超出 ${RATE.includeKm}km 后：¥${RATE.overPrice}/km（不足0.1km按0.1km计）`;
+  } else {
+    $('overRuleTip').textContent = `超出 ${RATE.includeKm}km 后：每满 ${RATE.blockKm}km 加收 ¥${RATE.blockFee}，不足 ${RATE.blockKm}km 按 ${RATE.blockKm}km 计`;
+  }
+  $('waitTip').textContent = `免费${RATE.freeWait}分钟，超¥${RATE.waitFee}/分${RATE.waitCap?`，封顶¥${RATE.waitCap}`:''}`;
+
+  renderTierGrid();
+  renderRateBody();
+}
+
+/* ===== 高德 Key 输入框（静态元素） ===== */
+function refreshKeyStatus(){
+  const st = $('keyStatus');
+  if(!st) return;
+  if(amapKey){ st.textContent = '已配置'; st.style.color = '#10b981'; }
+  else { st.textContent = '未配置'; st.style.color = '#ef4444'; }
+}
+$('f_amapKey').value = amapKey;
+refreshKeyStatus();
+$('f_amapKey').addEventListener('input', e=>{
+  amapKey = e.target.value.trim();
+  localStorage.setItem('dj_amap_key', amapKey);
+  refreshKeyStatus();
+});
+
+/* ===== 高德测距 ===== */
+async function amapGet(url){
+  const r = await fetch(url);
+  const data = await r.json();
+  if(data.status !== '1') throw new Error(data.info || '请求失败');
+  return data;
+}
+async function resolveLocation(text, coordAttr){
+  if(coordAttr) return coordAttr;
+  if(!amapKey) throw new Error('请先在上方展开「高德地图 Key」并粘贴 Key');
+  const url = `https://restapi.amap.com/v3/geocode/geo?key=${amapKey}&address=${encodeURIComponent(text)}&city=${encodeURIComponent('宁波')}`;
+  const data = await amapGet(url);
+  if(!data.geocodes || !data.geocodes.length) throw new Error(`未找到「${text}」，请写详细点`);
+  return data.geocodes[0].location;
+}
+$('calcDistBtn').addEventListener('click', async ()=>{
+  const sp = $('startPoint').value.trim();
+  const ep = $('endPoint').value.trim();
+  if(!sp || !ep){ toast('请先填写起点和终点'); return; }
+  const btn = $('calcDistBtn');
+  btn.disabled = true; btn.textContent = '测距中…';
+  try{
+    const origin = await resolveLocation(sp, $('startPoint').dataset.loc);
+    const destination = await resolveLocation(ep, $('endPoint').dataset.loc);
+    const url = `https://restapi.amap.com/v3/direction/driving?key=${amapKey}&origin=${origin}&destination=${destination}&extensions=base`;
+    const data = await amapGet(url);
+    const path = data.route.paths[0];
+    const km = path.distance / 1000;
+    const min = Math.round(path.duration / 60);
+    $('dist').value = km.toFixed(1);
+    $('distSlider').value = Math.min(100, km);
+    const info = $('routeInfo');
+    info.style.display = 'block';
+    info.innerHTML = `🚗 驾车里程 <b>${km.toFixed(1)} km</b> · 预计行驶 ${min} 分钟`;
+    render();
+    toast('距离已自动填入');
+  }catch(err){
+    toast(err.message || '测距失败');
+  }finally{
+    btn.disabled = false; btn.textContent = '获取驾车距离';
+  }
+});
+$('locateBtn').addEventListener('click', ()=>{
+  if(!navigator.geolocation){ toast('浏览器不支持定位'); return; }
+  toast('正在定位…');
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    const {longitude, latitude} = pos.coords;
+    const coord = `${longitude.toFixed(6)},${latitude.toFixed(6)}`;
+    $('startPoint').dataset.loc = coord;
+    if(amapKey){
+      try{
+        const url = `https://restapi.amap.com/v3/geocode/regeo?key=${amapKey}&location=${coord}`;
+        const data = await amapGet(url);
+        $('startPoint').value = data.regeocode.formatted_address || `当前位置`;
+        toast('已定位当前位置'); return;
+      }catch(e){}
+    }
+    $('startPoint').value = `当前位置 ${latitude.toFixed(3)},${longitude.toFixed(3)}`;
+    toast('已填入坐标');
+  }, ()=>toast('定位失败，请检查浏览器权限'));
+});
+
+/* ===== 事件 ===== */
+$('dist').addEventListener('input', e=>{
+  const v = parseFloat(e.target.value)||0;
+  $('distSlider').value = Math.min(100, v);
+  render();
+});
+$('distSlider').addEventListener('input', e=>{ $('dist').value = e.target.value; render(); });
+document.querySelectorAll('.chip').forEach(c=>{
+  c.addEventListener('click', ()=>{
+    $('dist').value = c.dataset.d; $('distSlider').value = c.dataset.d; render();
+  });
+});
+$('waitPlus').addEventListener('click', ()=>{ $('waitVal').textContent = parseInt($('waitVal').textContent)+1; render(); });
+$('waitMinus').addEventListener('click', ()=>{ $('waitVal').textContent = Math.max(0, parseInt($('waitVal').textContent)-1); render(); });
+['toll','park'].forEach(id=>$(id).addEventListener('input', render));
+
+$('platformSeg').addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  platform = b.dataset.p;
+  RATE = clonePreset(platform);
+  manualTierIdx = -1;
+  document.querySelectorAll('#platformSeg button').forEach(x=>x.classList.toggle('on', x===b));
+  render();
+  toast('已切换：' + PRESETS[platform].name);
+});
+
+/* ===== 历史 ===== */
+function getHist(){ try{ return JSON.parse(localStorage.getItem('dj_hist2')||'[]'); }catch(e){ return []; } }
+function setHist(h){ localStorage.setItem('dj_hist2', JSON.stringify(h.slice(-50))); }
+function renderHist(){
+  const h = getHist();
+  $('histCount').textContent = h.length ? `(${h.length} 条)` : '';
+  if(!h.length){ $('histList').innerHTML = '<div class="empty">暂无记录</div>'; return; }
+  $('histList').innerHTML = h.slice().reverse().map(it=>`
+    <div class="hist-item">
+      <div><div><b>${it.platform}</b> · ${it.dist}km · ${it.tier} · 等候${it.wait}分</div>
+        <div class="meta">${it.time}</div></div>
+      <div class="price">¥${fmt(it.total)}</div>
+    </div>`).join('');
+}
+$('saveBtn').addEventListener('click', ()=>{
+  const r = calc();
+  const h = getHist();
+  h.push({ total:r.total, dist:r.dist, wait:r.wait, tier:r.tier.label, platform:PRESETS[platform].name,
+    time: new Date().toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) });
+  setHist(h); renderHist(); toast('已记录');
+});
+$('copyBtn').addEventListener('click', ()=>{
+  const r = calc();
+  const sp = $('startPoint').value.trim();
+  const ep = $('endPoint').value.trim();
+  const lines = [
+    sp||ep ? `【${PRESETS[platform].name}报价】${sp?'从'+sp:''}${sp&&ep?' → ':''}${ep?'到'+ep:''}` : `【${PRESETS[platform].name}报价】${r.dist}km · ${r.tier.label}时段`,
+    `起步价：¥${fmt(r.startFee)}（含${RATE.includeKm}km）`,
+    r.kmFee>0 ? `里程费：¥${fmt(r.kmFee)}` : null,
+    r.wait>0 ? `等候费：¥${fmt(r.waitFee)}（${r.wait}分钟）` : null,
+    (r.toll+r.park)>0 ? `其他实报：¥${fmt(r.toll+r.park)}` : null,
+    `——`, `合计：¥${fmt(r.total)}`
+  ].filter(Boolean).join('\n');
+  navigator.clipboard.writeText(lines).then(()=>toast('报价已复制')).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=lines;document.body.appendChild(ta);
+    ta.select();document.execCommand('copy');ta.remove();toast('报价已复制');
+  });
+});
+
+function tick(){
+  const d = new Date();
+  $('clock').textContent = pad2(d.getHours())+':'+pad2(d.getMinutes());
+}
+setInterval(tick, 1000*20); tick();
+
+render();
+renderHist();
+</script>
+</body>
+</html>

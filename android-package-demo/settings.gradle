@@ -1,0 +1,3 @@
+// 【settings.gradle】—— 声明项目包含哪些模块
+rootProject.name = "PkgDemo"
+include ':app'

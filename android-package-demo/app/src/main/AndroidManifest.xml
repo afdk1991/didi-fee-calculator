@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  【方法一】从 AndroidManifest.xml 查看包名
+  根标签 <manifest> 的 package 属性即为应用包名。
+  注意：AGP 7.0+ 后 package 字段已移至 build.gradle 的 namespace，
+  此文件中可能不再显示 package 属性。
+
+  本文件已注册工程内全部 3 个演示 Activity。
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.PkgDemo"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        tools:targetApi="31">
+
+        <!-- Kotlin 主入口：4 种代码获取包名写法 -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Java 版示例：对应 Java 写法 -->
+        <activity
+            android:name=".MainActivityJava"
+            android:exported="false" />
+
+        <!-- 扩展场景：前台判断 / 进程名 / 系统应用 -->
+        <activity
+            android:name=".PkgUtilsActivity"
+            android:exported="false" />
+    </application>
+
+</manifest>
